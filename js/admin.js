@@ -2,74 +2,129 @@
    Admin panel logic — auth, moderation, content management
    ============================================================ */
 
-const DESIGNATED_SUPER_ADMIN_USERNAME = 'FBanjo'; // Only this username can bootstrap the first Super Admin account.
-let currentAdmin = null; // { username, role }
+/* ============================================================
+   Admin panel logic — real Firebase Authentication, moderation,
+   content management
+   ============================================================ */
+
+const DESIGNATED_SUPER_ADMIN_EMAIL = 'folahandaniel@gmail.com'; // Only this email can bootstrap the first Super Admin account.
+
+// A second, independent Firebase app instance used only for creating new
+// admin accounts. Without this, Firebase Auth's client SDK would sign the
+// Super Admin OUT and INTO the new account the moment it's created — this
+// keeps the Super Admin's own session untouched.
+const secondaryApp = firebase.initializeApp(firebaseConfig, 'Secondary');
+
+let currentAdmin = null; // { uid, email, role, branch }
 
 /* ---- Auth ---- */
 async function tryAdminLogin(){
-  const username = document.getElementById('admin-username').value.trim();
+  const email = document.getElementById('admin-email').value.trim();
   const password = document.getElementById('admin-pass').value;
-  if(!username || !password){ alert('Enter a username and password.'); return; }
+  const msg = document.getElementById('admin-login-msg');
+  if(!email || !password){ showMsg(msg,'Enter your email and password.','err'); return; }
+
   const existingAdmins = await fsList('admins');
-  const hash = await sha256Hex(password);
 
   if(existingAdmins.length === 0){
-    if(username.toLowerCase() !== DESIGNATED_SUPER_ADMIN_USERNAME.toLowerCase()){
-      alert('No admin account exists yet, and only the designated Super Admin username can set one up.');
+    if(email.toLowerCase() !== DESIGNATED_SUPER_ADMIN_EMAIL.toLowerCase()){
+      showMsg(msg,'No admin account exists yet, and only the designated Super Admin email can set one up.','err');
       return;
     }
-    const saved = await fsSet('admins', username, { username, passwordHash: hash, role:'super', note:'Super Admin (Founder)', active:true });
-    if(!saved){ alert('Could not create the Super Admin account. Check your Firebase connection and try again.'); return; }
-    currentAdmin = { username, role:'super' };
-    enterAdminPanel();
+    try{
+      const cred = await firebase.auth().createUserWithEmailAndPassword(email, password);
+      const saved = await fsSet('admins', cred.user.uid, { email, role:'super', note:'Super Admin (Founder)', active:true });
+      if(!saved){ showMsg(msg,'Account created but the admin record failed to save. Please try logging in again.','err'); return; }
+      currentAdmin = { uid: cred.user.uid, email, role:'super' };
+      enterAdminPanel();
+    }catch(e){
+      showMsg(msg, e.message, 'err');
+    }
     return;
   }
 
-  const rec = await fsGet('admins', username);
-  if(!rec || !rec.active || rec.passwordHash !== hash){ alert('Incorrect username or password, or account inactive.'); return; }
-  currentAdmin = { username, role: rec.role };
-  enterAdminPanel();
+  try{
+    const cred = await firebase.auth().signInWithEmailAndPassword(email, password);
+    const rec = await fsGet('admins', cred.user.uid);
+    if(!rec || !rec.active){
+      await firebase.auth().signOut();
+      showMsg(msg,'This account is not an active admin. Contact the Super Admin.','err');
+      return;
+    }
+    currentAdmin = { uid: cred.user.uid, email, role: rec.role, branch: rec.branch };
+    enterAdminPanel();
+  }catch(e){
+    showMsg(msg,'Incorrect email or password.','err');
+  }
 }
+
+async function forgotPassword(){
+  const email = document.getElementById('admin-email').value.trim();
+  const msg = document.getElementById('admin-login-msg');
+  if(!email){ showMsg(msg,'Enter your email address first, then click Forgot Password.','err'); return; }
+  try{
+    await firebase.auth().sendPasswordResetEmail(email);
+    showMsg(msg,'Password reset email sent. Check your inbox.','ok');
+  }catch(e){
+    showMsg(msg, e.message, 'err');
+  }
+}
+
+// Resume an existing session automatically on page reload.
+firebase.auth().onAuthStateChanged(async (user)=>{
+  if(user && !currentAdmin){
+    const rec = await fsGet('admins', user.uid);
+    if(rec && rec.active){
+      currentAdmin = { uid: user.uid, email: user.email, role: rec.role, branch: rec.branch };
+      enterAdminPanel();
+    }
+  }
+});
 
 function enterAdminPanel(){
   document.getElementById('admin-locked').classList.add('hidden');
   document.getElementById('admin-panel').classList.remove('hidden');
-  document.getElementById('admin-whoami').textContent = currentAdmin.username + ' (' + (currentAdmin.role==='super'?'Super Admin':'Admin') + ')';
+  document.getElementById('admin-whoami').textContent = currentAdmin.email + ' (' + (currentAdmin.role==='super'?'Super Admin':'Admin') + ')';
   document.getElementById('super-admin-section').classList.toggle('hidden', currentAdmin.role !== 'super');
   loadAll();
 }
-function adminLogout(){
+async function adminLogout(){
+  await firebase.auth().signOut();
   currentAdmin = null;
   document.getElementById('admin-panel').classList.add('hidden');
   document.getElementById('admin-locked').classList.remove('hidden');
-  document.getElementById('admin-username').value=''; document.getElementById('admin-pass').value='';
+  document.getElementById('admin-email').value=''; document.getElementById('admin-pass').value='';
 }
 
 async function createAdmin(){
-  const username = document.getElementById('na-username').value.trim();
+  const email = document.getElementById('na-email').value.trim();
   const password = document.getElementById('na-password').value;
   const msg = document.getElementById('na-msg');
-  if(!username || !password){ showMsg(msg,'Enter a username and password.','err'); return; }
-  const existing = await fsGet('admins', username);
-  if(existing){ showMsg(msg,'That username already exists.','err'); return; }
-  const hash = await sha256Hex(password);
-  const saved = await fsSet('admins', username, { username, passwordHash: hash, role:'admin', note: document.getElementById('na-note').value.trim(), active:true });
-  if(!saved){ showMsg(msg,'Save failed. Please try again.','err'); return; }
-  showMsg(msg, 'Admin account created.', 'ok');
-  document.getElementById('na-username').value=''; document.getElementById('na-password').value=''; document.getElementById('na-note').value='';
-  loadAdmins();
+  if(!email || !password){ showMsg(msg,'Enter an email and password.','err'); return; }
+  if(password.length < 6){ showMsg(msg,'Password must be at least 6 characters.','err'); return; }
+  try{
+    const cred = await secondaryApp.auth().createUserWithEmailAndPassword(email, password);
+    await secondaryApp.auth().signOut();
+    const saved = await fsSet('admins', cred.user.uid, { email, role:'admin', note: document.getElementById('na-note').value.trim(), active:true });
+    if(!saved){ showMsg(msg,'Account created but the admin record failed to save.','err'); return; }
+    showMsg(msg,'Admin account created.','ok');
+    document.getElementById('na-email').value=''; document.getElementById('na-password').value=''; document.getElementById('na-note').value='';
+    loadAdmins();
+  }catch(e){
+    showMsg(msg, e.message, 'err');
+  }
 }
-async function toggleAdminActive(username){
-  const rec = await fsGet('admins', username);
+async function toggleAdminActive(uid){
+  const rec = await fsGet('admins', uid);
   if(!rec) return;
-  await fsSet('admins', username, { active: !rec.active });
+  await fsSet('admins', uid, { active: !rec.active });
   loadAdmins();
 }
 async function loadAdmins(){
   const admins = await fsList('admins');
   document.querySelector('#admins-table tbody').innerHTML = admins.map(a=>
-    `<tr><td>${esc(a.username)} ${a.role==='super'?'<span class="badge">Super</span>':''}</td><td>${esc(a.note||'—')}</td><td>${a.active?'Active':'Inactive'}</td>
-     <td>${a.role!=='super' ? `<button class="btn small outline" onclick="toggleAdminActive('${a.username}')">${a.active?'Deactivate':'Reactivate'}</button>` : ''}</td></tr>`
+    `<tr><td>${esc(a.email)} ${a.role==='super'?'<span class="badge">Super</span>':''}</td><td>${esc(a.note||'—')}</td><td>${a.active?'Active':'Inactive'}</td>
+     <td>${a.role!=='super' ? `<button class="btn small outline" onclick="toggleAdminActive('${a.id}')">${a.active?'Deactivate':'Reactivate'}</button>` : ''}</td></tr>`
   ).join('') || '<tr><td colspan="4" style="color:var(--muted);">No admins yet.</td></tr>';
 }
 

@@ -23,11 +23,29 @@ follow-up pass now that the Firebase foundation is solid.
 
 ## Before you deploy: create the Super Admin
 
-The very first person to log in at `/admin.html` with the username **FBanjo**
-becomes the Super Admin — this is hardcoded in `js/admin.js`
-(`DESIGNATED_SUPER_ADMIN_USERNAME`) so no one else can accidentally claim it.
-Log in there first, with whatever password you want, before sharing the
-site publicly.
+Go to `/admin.html` and sign in with the email **folahandaniel@gmail.com**
+(hardcoded as `DESIGNATED_SUPER_ADMIN_EMAIL` in `js/admin.js`) and whatever
+password you want, at least 6 characters, a Firebase requirement. That first
+sign-in creates the real Firebase Authentication account and the matching
+Super Admin record. No one else can claim this, since Firestore's rules
+check that the signed-in Firebase Auth email itself matches this exact
+address, not just a value someone typed into a form.
+
+Do this before sharing the site publicly, and before anyone else tries the
+admin login first.
+
+## One more required step: enable Email/Password sign-in
+
+Firebase Authentication needs to be turned on once, in the console:
+
+1. Go to the Firebase Console → your `fgo-kingdom-dd7e8` project.
+2. In the sidebar, under Build, click **Authentication**.
+3. Click **Get started** if you haven't used Authentication before.
+4. Under the **Sign-in method** tab, click **Email/Password**, toggle it to
+   **Enabled**, and click **Save**.
+
+Without this one toggle, sign-in and account creation will fail with an
+error, even though everything else is set up correctly.
 
 ## Deploying with GitHub + Firebase Hosting (recommended)
 
@@ -66,27 +84,31 @@ is what's doing the actual data storage:
 Either hosting choice works identically, since all the dynamic data lives in
 Firestore, not on the file host.
 
-## Security — what's next (important, please read)
+## Security — what's been fixed, and what's still worth doing
 
-Right now, the admin panel authenticates with a username/password stored
-**in Firestore itself** (hashed, not plain text) — not with real Firebase
-Authentication. That means Firestore's security rules (`firestore.rules`)
-can't actually tell the difference between "the admin panel" and "anyone
-who finds the Firestore write endpoint directly." The rules in this project
-reflect that honestly:
+As of this version, the admin panel uses **real Firebase Authentication**
+(email/password), not a homegrown password check. Firestore's rules
+(`firestore.rules`) now genuinely enforce who can read and write what:
 
-- Member registrations, tickets, and giving records are **not publicly
-  readable** — protecting names, phone numbers, and amounts from casual
-  snooping.
-- Sermons, events, testimonies, and admin accounts currently allow **open
-  writes**, because there's no server-side way yet to verify "this write
-  came from a logged-in admin."
+- Member registrations, tickets, and giving records are readable only by
+  signed-in, active admins — protecting names, phone numbers, and amounts.
+- Sermons, events, testimony moderation, and site settings can only be
+  written by a signed-in, active admin.
+- Only the real Super Admin (verified through Firebase's own authentication,
+  not a value typed into a form) can create or manage other admin accounts.
+- One narrow, deliberate public exception: anyone can increment a
+  testimony's reaction count by exactly 1, since that's meant to be a public
+  action — nothing else about a testimony can be changed by a non-admin.
 
-**The real fix** is adding Firebase Authentication (email/password sign-in
-for admins) so the rules can check `request.auth != null` and actually
-enforce who can write what. This is a meaningful next step before this
-site holds a large, real, public audience — happy to build it in a follow-up
-round.
+**Still worth doing, when you're ready to scale further:**
+- Role-based permissions beyond "admin vs super" (e.g. an admin who can only
+  manage sermons, not see giving records).
+- Requiring email verification before an account counts as "real," which
+  closes a small remaining gap: right now, whoever first successfully signs
+  up as folahandaniel@gmail.com in Firebase Auth secures that identity, so
+  do this soon rather than leaving it open indefinitely.
+- Rate limiting or App Check, to slow down automated abuse of public write
+  paths like registration and testimony submission.
 
 ## Updating Firestore rules
 

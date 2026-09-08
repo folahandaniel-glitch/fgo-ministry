@@ -32,13 +32,15 @@
   <div class="wrap" style="max-width:900px;">
 
     <div id="admin-locked" class="card" style="text-align:center; padding:50px 20px;">
-      <p class="lead sans" style="margin:0 0 16px;">Enter your admin username and password. Only the designated Super Admin username can set up the first account.</p>
-      <div style="max-width:280px; margin:0 auto;">
-        <input id="admin-username" placeholder="Username">
+      <p class="lead sans" style="margin:0 0 16px;">Sign in with your admin email and password. Only the designated Super Admin email can set up the first account.</p>
+      <div style="max-width:300px; margin:0 auto;">
+        <input id="admin-email" type="email" placeholder="Email address">
         <input id="admin-pass" type="password" placeholder="Password">
-        <button class="btn crimson" style="width:100%; margin-top:12px;" onclick="tryAdminLogin()">Enter</button>
+        <button class="btn crimson" style="width:100%; margin-top:12px;" onclick="tryAdminLogin()">Sign In</button>
+        <button class="btn small outline" style="width:100%; margin-top:8px;" onclick="forgotPassword()">Forgot Password?</button>
       </div>
-      <p class="small-note">Passwords are hashed, not stored as plain text. This is basic app-level authentication, not enterprise security.</p>
+      <div class="msg" id="admin-login-msg"></div>
+      <p class="small-note">Secured by Firebase Authentication. You'll stay signed in on this device until you log out.</p>
     </div>
 
     <div id="admin-panel" class="hidden">
@@ -138,12 +140,12 @@
       <!-- SUPER ADMIN: MANAGE ADMINS -->
       <div class="card sans hidden" id="super-admin-section" style="margin-top:22px;">
         <h3 style="border:none; color:var(--gold-soft); font-weight:400;">Super Admin — Manage Admins</h3>
-        <label>New Admin Username</label><input id="na-username">
-        <label>Password</label><input id="na-password" type="password">
+        <label>New Admin Email</label><input id="na-email" type="email">
+        <label>Temporary Password</label><input id="na-password" type="password">
         <label>Note</label><input id="na-note" placeholder="e.g. Sermon uploads, Welfare desk">
         <button class="btn" onclick="createAdmin()">Create Admin</button>
         <div class="msg" id="na-msg"></div>
-        <div style="overflow-x:auto; margin-top:16px;"><table id="admins-table"><thead><tr><th>Username</th><th>Note</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div>
+        <div style="overflow-x:auto; margin-top:16px;"><table id="admins-table"><thead><tr><th>Email</th><th>Note</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div>
       </div>
 
     </div>
@@ -156,6 +158,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="js/firebase-config.js"></script>
 <script src="js/app.js"></script>
 <script src="js/admin.js"></script>
