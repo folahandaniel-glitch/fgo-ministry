@@ -2,60 +2,94 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Membership registrations: anyone can register, nobody can read the
-    // list back (protects phone numbers/addresses from casual snooping),
-    // and there's no edit/delete path from the site yet.
-    match /members/{id} {
-      allow read: if false;
-      allow create: if true;
-      allow update, delete: if false;
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function adminDoc() {
+      return get(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    function isActiveAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && adminDoc().data.active == true;
+    }
+    function isSuper() {
+      return isActiveAdmin() && adminDoc().data.role == 'super';
     }
 
-    // Sermons and events are public content — meant to be read by everyone.
-    // Write access is open because the admin panel has no Firebase
-    // Authentication wired in yet (see README "Security — what's next").
+    // Membership registrations: anyone can register. Only signed-in,
+    // active admins can read the list back or edit/remove a record —
+    // this protects phone numbers, addresses, and prayer requests from
+    // being readable by the public.
+    match /members/{id} {
+      allow read, update, delete: if isActiveAdmin();
+      allow create: if true;
+    }
+
+    // Sermons and events are public content, meant to be read by everyone.
+    // Only signed-in, active admins can create/edit/delete them.
     match /sermons/{id} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isActiveAdmin();
     }
     match /events/{id} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isActiveAdmin();
     }
 
-    // Tickets carry names/phone numbers for real people — not publicly
-    // readable. Anyone can create one (buying/reserving a ticket).
+    // Tickets carry names and phone numbers — not publicly readable.
+    // Anyone can create one (buying/reserving a ticket); only admins can
+    // read the attendee list or edit/remove entries (e.g. check-in).
     match /tickets/{id} {
-      allow read: if false;
+      allow read, update, delete: if isActiveAdmin();
       allow create: if true;
-      allow update, delete: if false;
     }
 
-    // Testimonies: only approved ones are publicly readable. Anyone can
-    // submit (goes in as "pending"). Update/delete stay open for the
-    // approve/react/moderate actions until real admin auth exists.
+    // Testimonies: only approved ones are publicly readable; admins can
+    // read all of them (including pending, for moderation). Anyone can
+    // submit one (goes in as "pending"). Only admins can approve, edit
+    // content, or delete — except one narrow, deliberate exception: any
+    // visitor may increment the "reactions" count by exactly 1 on an
+    // already-approved testimony (the public heart button), and nothing
+    // else about the document.
     match /testimonies/{id} {
-      allow read: if resource.data.status == 'approved';
+      allow read: if resource.data.status == 'approved' || isActiveAdmin();
       allow create: if true;
-      allow update, delete: if true;
+      allow update: if isActiveAdmin()
+                    || (resource.data.status == 'approved'
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions'])
+                        && request.resource.data.reactions == resource.data.reactions + 1);
+      allow delete: if isActiveAdmin();
     }
 
-    // Giving records carry names/amounts — not publicly readable.
+    // Giving records carry names and amounts — admin-only read/write,
+    // aside from the record created at the moment of a successful gift.
     match /gifts/{id} {
-      allow read: if false;
+      allow read, update, delete: if isActiveAdmin();
       allow create: if true;
-      allow update, delete: if false;
     }
 
-    // Admin accounts — the single biggest open item. See README.
-    match /admins/{id} {
-      allow read, write: if true;
+    // Admin accounts. The very first document can only be created by
+    // someone who has authenticated (via Firebase Auth itself, meaning
+    // they know the password) as the one designated Super Admin email —
+    // see DESIGNATED_SUPER_ADMIN_EMAIL in js/admin.js. Every account
+    // after that can only be created, edited, or removed by an existing
+    // Super Admin.
+    match /admins/{uid} {
+      allow read: if isActiveAdmin();
+      allow create: if isSuper()
+                    || (request.auth.uid == uid
+                        && request.resource.data.role == 'super'
+                        && request.resource.data.email == 'folahandaniel@gmail.com'
+                        && request.auth.token.email == 'folahandaniel@gmail.com');
+      allow update, delete: if isSuper();
     }
 
-    // Site-wide settings: Paystack key, About page text.
+    // Site-wide settings: Paystack key, About page text. Public read
+    // (the About page and Give page need this), admin-only write.
     match /config/{id} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isActiveAdmin();
     }
 
     // Used only by the built-in connectivity check.
