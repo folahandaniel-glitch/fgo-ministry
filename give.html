@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Give — Fodan Gospel Outreach</title>
+<meta name="description" content="Support the work of Fodan Gospel Outreach through tithes, offerings, and special giving.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="storage-warning" class="hidden sans" style="background:#8E1B2B;color:#fff;text-align:center;padding:10px 16px;font-size:0.82rem;">
+  &#9888; We're having trouble connecting right now. Some features may not save. Please try again shortly.
+</div>
+
+<header class="site-header">
+  <div class="nav-row">
+    <a href="index.html" class="brand">
+      <img src="assets/images/fgo-logo.png" alt="Fodan Gospel Outreach">
+      <div><div class="name">FODAN GOSPEL OUTREACH</div><div class="tag">Raising Youth, Families &amp; Generations for Christ</div></div>
+    </a>
+    <button id="nav-toggle">&#9776;</button>
+    <nav class="main-nav" id="main-nav">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="wings.html">Wings</a>
+      <a href="sermons.html">Sermons</a>
+      <a href="events.html">Events</a>
+      <a href="testimonies.html">Testimonies</a>
+      <a href="register.html">Register</a>
+      <a href="contact.html">Contact</a>
+      <a href="give.html" class="give-link active">Give</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero page-hero">
+  <div class="eyebrow">Sow &amp; Support</div>
+  <h1>Give to Fodan Gospel Outreach</h1>
+  <p class="lead">Your tithe, offering, or seed sustains the work of the ministry.</p>
+</section>
+
+<section style="padding-top:0;">
+  <div class="wrap">
+    <div class="grid cols-2">
+      <div class="card">
+        <h3 style="border:none; color:#fff; font-weight:400;">Make a Gift</h3>
+        <label>Full Name</label><input id="g-name">
+        <label>Email (required for receipt)</label><input id="g-email" type="email">
+        <label>Purpose</label>
+        <select id="g-purpose">
+          <option>Tithe</option><option>Offering</option><option>Building Project</option>
+          <option>Bible School Fees</option><option>Seed / Special Giving</option><option>Welfare Support</option>
+        </select>
+        <label>Amount (&#8358;)</label><input id="g-amount" type="number" min="100">
+        <button class="btn crimson" id="g-give-btn" onclick="startGiving()">Give Now</button>
+        <div class="msg" id="g-msg"></div>
+        <p class="small-note" id="g-not-configured">Online giving isn't active yet.</p>
+      </div>
+
+      <div class="card" style="border-color:var(--gold);">
+        <h3 style="border:none; color:#fff; font-weight:400;">Bank Transfer</h3>
+        <p class="lead" style="text-align:left; font-size:0.9rem; margin:0 0 14px;">Prefer to transfer directly? Use these details, then send your proof of payment to us on WhatsApp.</p>
+        <div style="background:#0A1523; border:1px solid var(--line); border-radius:8px; padding:16px;">
+          <div style="margin-bottom:12px;">
+            <div class="small-note" style="text-transform:uppercase; letter-spacing:1px;">Account Name</div>
+            <div style="color:var(--ivory); font-size:1rem;">Banjo Folahan Daniel</div>
+          </div>
+          <div style="margin-bottom:12px;">
+            <div class="small-note" style="text-transform:uppercase; letter-spacing:1px;">Bank Name</div>
+            <div style="color:var(--ivory); font-size:1rem;">GTBank</div>
+          </div>
+          <div>
+            <div class="small-note" style="text-transform:uppercase; letter-spacing:1px;">Account Number</div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div id="gtb-acct" style="color:var(--gold-soft); font-size:1.15rem; font-family:monospace; letter-spacing:1px;">0121041488</div>
+              <button class="btn small outline" onclick="copyAcct()">Copy</button>
+            </div>
+          </div>
+        </div>
+        <p class="small-note" id="copy-msg"></p>
+        <p class="small-note">WhatsApp: <a href="https://wa.me/2348067578112" target="_blank">08067578112</a></p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:24px;">
+      <h3 style="border:none; color:#fff; font-weight:400;">Recent Gifts</h3>
+      <p class="small-note">Shown without amounts for privacy.</p>
+      <div id="recent-gifts" class="sans" style="color:var(--muted); font-size:0.9rem;"></div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="tagline">&ldquo;Raising Youth With Fire, Families With Light, and Generations With Christ.&rdquo;</div>
+  <div>FODAN GOSPEL OUTREACH &middot; The Living Youth International</div>
+  <div class="socials"><a href="https://bit.ly/4rSowUy" target="_blank">Website</a> &middot; <a href="tel:08067578112">08067578112</a> &middot; <a href="mailto:folahandaniel@gmail.com">Email</a></div>
+  <div style="margin-top:10px;">JESUS IS LORD.</div>
+  <div style="margin-top:16px; font-size:0.7rem; opacity:0.6;">&copy; <span id="year"></span> Fodan Gospel Outreach. All rights reserved.</div>
+</footer>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/app.js"></script>
+<script>
+document.getElementById('year').textContent = new Date().getFullYear();
+
+function copyAcct(){
+  navigator.clipboard.writeText(document.getElementById('gtb-acct').textContent).then(()=>{
+    const m = document.getElementById('copy-msg');
+    m.textContent = 'Account number copied.'; m.style.color = 'var(--gold-soft)';
+    setTimeout(()=>{ m.textContent=''; }, 3000);
+  });
+}
+
+async function checkGivingConfigured(){
+  const cfg = await fsGet('config', 'paystack');
+  const notice = document.getElementById('g-not-configured');
+  const btn = document.getElementById('g-give-btn');
+  if(cfg && cfg.key){ notice.classList.add('hidden'); btn.disabled = false; }
+  else { notice.classList.remove('hidden'); btn.disabled = true; }
+}
+
+async function startGiving(){
+  const name = document.getElementById('g-name').value.trim();
+  const email = document.getElementById('g-email').value.trim();
+  const amount = parseFloat(document.getElementById('g-amount').value);
+  const purpose = document.getElementById('g-purpose').value;
+  const msg = document.getElementById('g-msg');
+  if(!name || !email || !amount || amount < 100){ showMsg(msg,'Enter your name, a valid email, and an amount of at least ₦100.','err'); return; }
+  const cfg = await fsGet('config', 'paystack');
+  if(!cfg || !cfg.key){ showMsg(msg,'Online giving is not configured yet.','err'); return; }
+  if(typeof PaystackPop === 'undefined'){ showMsg(msg,'Payment system failed to load.','err'); return; }
+  const handler = PaystackPop.setup({
+    key: cfg.key, email, amount: Math.round(amount*100), currency:'NGN',
+    metadata:{ name, purpose },
+    callback: function(response){
+      fsAdd('gifts', { name, email, purpose, amount, reference: response.reference });
+      showMsg(msg, 'Thank you! Your gift was received. Reference: ' + response.reference, 'ok');
+      document.getElementById('g-amount').value='';
+      renderRecentGifts();
+    },
+    onClose: function(){ showMsg(msg,'Payment window closed.','err'); }
+  });
+  handler.openIframe();
+}
+
+async function renderRecentGifts(){
+  const gifts = await fsList('gifts');
+  gifts.sort((a,b)=> (b._createdAt?.seconds||0) - (a._createdAt?.seconds||0));
+  const wrap = document.getElementById('recent-gifts');
+  wrap.innerHTML = gifts.slice(0,10).map(g=>
+    `<div style="padding:6px 0; border-bottom:1px solid var(--line);">${esc(g.name)} gave toward <span style="color:var(--gold-soft);">${esc(g.purpose)}</span></div>`
+  ).join('') || '<p>No gifts recorded yet.</p>';
+}
+
+checkGivingConfigured();
+renderRecentGifts();
+</script>
+</body>
+</html>

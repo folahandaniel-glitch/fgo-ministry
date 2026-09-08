@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Fodan Gospel Outreach</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="storage-warning" class="hidden sans" style="background:#8E1B2B;color:#fff;text-align:center;padding:10px 16px;font-size:0.82rem;">
+  &#9888; We're having trouble connecting right now. Some features may not save. Please try again shortly.
+</div>
+
+<header class="site-header">
+  <div class="nav-row">
+    <a href="index.html" class="brand">
+      <img src="assets/images/fgo-logo.png" alt="Fodan Gospel Outreach">
+      <div><div class="name">FODAN GOSPEL OUTREACH</div><div class="tag">Admin Panel</div></div>
+    </a>
+    <a href="index.html" class="btn small outline">&larr; Back to Site</a>
+  </div>
+</header>
+
+<section class="hero page-hero" style="padding-bottom:20px;">
+  <div class="eyebrow">Administration</div>
+  <h1>Admin Panel</h1>
+</section>
+
+<section style="padding-top:0;">
+  <div class="wrap" style="max-width:900px;">
+
+    <div id="admin-locked" class="card" style="text-align:center; padding:50px 20px;">
+      <p class="lead sans" style="margin:0 0 16px;">Enter your admin username and password. Only the designated Super Admin username can set up the first account.</p>
+      <div style="max-width:280px; margin:0 auto;">
+        <input id="admin-username" placeholder="Username">
+        <input id="admin-pass" type="password" placeholder="Password">
+        <button class="btn crimson" style="width:100%; margin-top:12px;" onclick="tryAdminLogin()">Enter</button>
+      </div>
+      <p class="small-note">Passwords are hashed, not stored as plain text. This is basic app-level authentication, not enterprise security.</p>
+    </div>
+
+    <div id="admin-panel" class="hidden">
+      <div class="card sans" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div>Logged in as <strong id="admin-whoami" style="color:var(--gold-soft);"></strong></div>
+        <button class="btn small outline" onclick="adminLogout()">Log Out</button>
+      </div>
+
+      <div class="grid cols-4" style="margin-top:20px;">
+        <div class="stat"><div class="n" id="stat-members">0</div><div class="l">Members</div></div>
+        <div class="stat"><div class="n" id="stat-welfare">0</div><div class="l">Welfare Requests</div></div>
+        <div class="stat"><div class="n" id="stat-testimonies-pending">0</div><div class="l">Pending Testimonies</div></div>
+        <div class="stat"><div class="n" id="stat-gifts">&#8358;0</div><div class="l">Total Given</div></div>
+      </div>
+
+      <!-- MEMBERS -->
+      <div class="card sans" style="margin-top:22px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Members</h3>
+        <div style="overflow-x:auto;"><table id="members-table"><thead><tr><th>Name</th><th>Phone</th><th>Wing</th><th>Branch</th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <div class="card sans" style="margin-top:22px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Welfare &amp; Prayer Requests</h3>
+        <div style="overflow-x:auto;"><table id="welfare-table"><thead><tr><th>Name</th><th>Phone</th><th>Request</th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <!-- SERMONS -->
+      <div class="card sans" style="margin-top:22px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Publish a Sermon</h3>
+        <label>Title</label><input id="s-title">
+        <label>Central Scripture</label><input id="s-scripture">
+        <label>Content</label><textarea id="s-content" style="min-height:150px;"></textarea>
+        <button class="btn" onclick="publishSermon()">Publish</button>
+        <div class="msg" id="s-msg"></div>
+      </div>
+      <div class="card sans" style="margin-top:12px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Manage Sermons</h3>
+        <div style="overflow-x:auto;"><table id="sermons-table"><thead><tr><th>Title</th><th>Scripture</th><th></th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <!-- EVENTS -->
+      <div class="card sans" style="margin-top:22px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Create an Event</h3>
+        <label>Event Title</label><input id="ev-title">
+        <label>Category</label>
+        <select id="ev-category"><option>Convention</option><option>Revival</option><option>Retreat</option><option>Youth Camp</option><option>Workshop</option><option>Other</option></select>
+        <label>Description</label><textarea id="ev-desc"></textarea>
+        <label>Date</label><input id="ev-date" type="date">
+        <label>Time</label><input id="ev-time" type="time">
+        <label>Location</label><input id="ev-location">
+        <label>Ticket Price (&#8358;, 0 for free)</label><input id="ev-price" type="number" min="0" value="0">
+        <button class="btn" onclick="createEvent()">Publish Event</button>
+        <div class="msg" id="ev-msg"></div>
+      </div>
+      <div class="card sans" style="margin-top:12px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Manage Events</h3>
+        <div style="overflow-x:auto;"><table id="events-table"><thead><tr><th>Event</th><th>Date</th><th>Tickets</th><th>Revenue</th><th></th></tr></thead><tbody></tbody></table></div>
+        <div id="attendees-panel" class="hidden" style="margin-top:16px;">
+          <h4 class="sans" style="color:var(--gold-soft); font-size:0.85rem;" id="attendees-title"></h4>
+          <div style="overflow-x:auto;"><table id="attendees-table"><thead><tr><th>Name</th><th>Phone</th><th>Code</th></tr></thead><tbody></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- TESTIMONIES -->
+      <div class="card sans" style="margin-top:22px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Testimony Moderation</h3>
+        <div style="overflow-x:auto;"><table id="pending-testimony-table"><thead><tr><th>Name</th><th>Testimony</th><th></th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="card sans" style="margin-top:12px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Published Testimonies</h3>
+        <div style="overflow-x:auto;"><table id="approved-testimony-table"><thead><tr><th>Name</th><th>Testimony</th><th>Reactions</th><th></th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <!-- GIVING -->
+      <div class="card sans" style="margin-top:22px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Online Giving Setup</h3>
+        <label>Paystack Public Key</label><input id="pk-key" placeholder="pk_test_... or pk_live_...">
+        <p class="small-note">Get this from your Paystack Dashboard → Settings → API Keys. Use pk_test_ first.</p>
+        <button class="btn" onclick="savePaystackKey()">Save Key</button>
+        <div class="msg" id="pk-msg"></div>
+      </div>
+      <div class="card sans" style="margin-top:12px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Giving Records</h3>
+        <div style="overflow-x:auto;"><table id="gifts-table"><thead><tr><th>Name</th><th>Purpose</th><th>Amount</th><th>Reference</th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <!-- ABOUT PAGE CONTENT -->
+      <div class="card sans" style="margin-top:22px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">About / Trust Page Content</h3>
+        <label>Mission Statement</label><textarea id="ab-mission" style="min-height:80px;"></textarea>
+        <label>Statement of Faith</label><textarea id="ab-faith" style="min-height:200px;"></textarea>
+        <label>Registration / Legal Details (leave blank to hide)</label><textarea id="ab-registration" style="min-height:60px;"></textarea>
+        <button class="btn" onclick="saveAboutContent()">Save About Page</button>
+        <div class="msg" id="ab-msg"></div>
+      </div>
+
+      <!-- SUPER ADMIN: MANAGE ADMINS -->
+      <div class="card sans hidden" id="super-admin-section" style="margin-top:22px;">
+        <h3 style="border:none; color:var(--gold-soft); font-weight:400;">Super Admin — Manage Admins</h3>
+        <label>New Admin Username</label><input id="na-username">
+        <label>Password</label><input id="na-password" type="password">
+        <label>Note</label><input id="na-note" placeholder="e.g. Sermon uploads, Welfare desk">
+        <button class="btn" onclick="createAdmin()">Create Admin</button>
+        <div class="msg" id="na-msg"></div>
+        <div style="overflow-x:auto; margin-top:16px;"><table id="admins-table"><thead><tr><th>Username</th><th>Note</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div style="font-size:0.7rem; opacity:0.6;">&copy; <span id="year"></span> Fodan Gospel Outreach.</div>
+</footer>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/admin.js"></script>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

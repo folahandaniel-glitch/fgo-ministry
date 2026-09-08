@@ -1,0 +1,66 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Membership registrations: anyone can register, nobody can read the
+    // list back (protects phone numbers/addresses from casual snooping),
+    // and there's no edit/delete path from the site yet.
+    match /members/{id} {
+      allow read: if false;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
+    // Sermons and events are public content — meant to be read by everyone.
+    // Write access is open because the admin panel has no Firebase
+    // Authentication wired in yet (see README "Security — what's next").
+    match /sermons/{id} {
+      allow read: if true;
+      allow write: if true;
+    }
+    match /events/{id} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Tickets carry names/phone numbers for real people — not publicly
+    // readable. Anyone can create one (buying/reserving a ticket).
+    match /tickets/{id} {
+      allow read: if false;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
+    // Testimonies: only approved ones are publicly readable. Anyone can
+    // submit (goes in as "pending"). Update/delete stay open for the
+    // approve/react/moderate actions until real admin auth exists.
+    match /testimonies/{id} {
+      allow read: if resource.data.status == 'approved';
+      allow create: if true;
+      allow update, delete: if true;
+    }
+
+    // Giving records carry names/amounts — not publicly readable.
+    match /gifts/{id} {
+      allow read: if false;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
+    // Admin accounts — the single biggest open item. See README.
+    match /admins/{id} {
+      allow read, write: if true;
+    }
+
+    // Site-wide settings: Paystack key, About page text.
+    match /config/{id} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Used only by the built-in connectivity check.
+    match /_healthcheck/{id} {
+      allow read, write: if true;
+    }
+  }
+}
