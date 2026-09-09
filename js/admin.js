@@ -274,6 +274,149 @@ async function loadAboutFields(){
   if(reg) document.getElementById('ab-registration').value = reg.text;
 }
 
+/* ---- Bible School: Fee & Passcodes ---- */
+async function saveSchoolFee(){
+  const amount = parseFloat(document.getElementById('sf-amount').value) || 0;
+  const msg = document.getElementById('sf-msg');
+  const saved = await fsSet('config', 'schoolfee', { amount });
+  if(!saved){ showMsg(msg,'Save failed. Please try again.','err'); return; }
+  showMsg(msg, 'Bible School fee updated.', 'ok');
+}
+async function loadSchoolFee(){
+  const cfg = await fsGet('config', 'schoolfee');
+  if(cfg) document.getElementById('sf-amount').value = cfg.amount;
+}
+
+function randomPasscode(){
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for(let i=0;i<8;i++) code += chars[Math.floor(Math.random()*chars.length)];
+  return code;
+}
+async function generatePasscodes(){
+  const qty = parseInt(document.getElementById('pc-qty').value) || 1;
+  const msg = document.getElementById('pc-msg');
+  for(let i=0;i<qty;i++){
+    const code = randomPasscode();
+    await fsSet('passcodes', code, { code, used:false, usedBy:null, usedAt:null });
+  }
+  showMsg(msg, qty + ' passcode(s) generated below.', 'ok');
+  loadPasscodes();
+}
+async function loadPasscodes(){
+  const codes = await fsList('passcodes');
+  document.querySelector('#passcodes-table tbody').innerHTML = codes.map(c=>
+    `<tr><td style="font-family:monospace; letter-spacing:1px;">${esc(c.id)}</td><td><span class="badge">${c.used?'Used':'Unused'}</span></td><td>${esc(c.usedBy||'—')}</td></tr>`
+  ).join('') || '<tr><td colspan="3" style="color:var(--muted);">No passcodes generated yet.</td></tr>';
+}
+
+/* ---- Bible School: Courses ---- */
+async function createCourse(){
+  const name = document.getElementById('co-name').value.trim();
+  const msg = document.getElementById('co-msg');
+  if(!name){ showMsg(msg,'Enter a course name.','err'); return; }
+  const id = await fsAdd('courses', { name, desc: document.getElementById('co-desc').value.trim() });
+  if(!id){ showMsg(msg,'Save failed. Please try again.','err'); return; }
+  showMsg(msg, 'Course added.', 'ok');
+  document.getElementById('co-name').value=''; document.getElementById('co-desc').value='';
+  loadCourses();
+}
+async function deleteCourse(id){
+  if(!confirm('Delete this course? Its exam questions will remain on record but be unreachable.')) return;
+  await fsDelete('courses', id);
+  loadCourses();
+}
+async function loadCourses(){
+  const courses = await fsList('courses');
+  const examsets = await fsList('examsets');
+  document.querySelector('#courses-table tbody').innerHTML = courses.map(c=>{
+    const set = examsets.find(e=>e.id===c.id);
+    const qcount = set ? (set.questions||[]).length : 0;
+    return `<tr><td>${esc(c.name)}</td><td>${esc(c.desc||'—')}</td><td>${qcount}</td><td><button class="btn small outline" onclick="deleteCourse('${c.id}')">Delete</button></td></tr>`;
+  }).join('') || '<tr><td colspan="4" style="color:var(--muted);">No courses yet.</td></tr>';
+
+  const sel = document.getElementById('ex-upload-course');
+  if(sel) sel.innerHTML = courses.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('') || '<option disabled>No courses yet</option>';
+}
+
+/* ---- Bible School: DOCX exam upload ---- */
+function parseQuestionsFromText(text){
+  const lines = text.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+  const questions = [];
+  let cur = null;
+  const qRe = /^\d+[\.\)]\s*(.+)/;
+  const optRe = /^(\*)?\s*([A-Da-d])[\.\)]\s*(.+)/;
+  for(const line of lines){
+    const qm = line.match(qRe);
+    const om = line.match(optRe);
+    if(qm && !om){
+      if(cur && cur.opts.length>=2) questions.push(cur);
+      cur = { q: qm[1].trim(), opts: [], a: 0 };
+    } else if(om && cur){
+      const isCorrect = !!om[1];
+      cur.opts.push(om[3].trim());
+      if(isCorrect) cur.a = cur.opts.length - 1;
+    }
+  }
+  if(cur && cur.opts.length>=2) questions.push(cur);
+  return questions;
+}
+
+async function parseExamDocx(){
+  const fileInput = document.getElementById('ex-upload-file');
+  const msg = document.getElementById('ex-upload-msg');
+  const previewBox = document.getElementById('ex-preview');
+  if(!fileInput.files.length){ showMsg(msg,'Choose a .docx file first.','err'); return; }
+  if(typeof mammoth === 'undefined'){ showMsg(msg,'The document reader failed to load. Check your connection and try again.','err'); return; }
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+  reader.onload = async function(){
+    try{
+      const result = await mammoth.extractRawText({ arrayBuffer: reader.result });
+      const questions = parseQuestionsFromText(result.value);
+      if(questions.length === 0){
+        previewBox.innerHTML = '<div class="msg err show">No questions detected. Check the format shown above and try again.</div>';
+        return;
+      }
+      window.__pendingExamQuestions = questions;
+      previewBox.innerHTML = '<h4 class="sans" style="color:var(--gold-soft); font-size:0.9rem;">' + questions.length + ' question(s) detected — review before saving:</h4>' +
+        questions.map((q,i)=>`<div class="sans" style="margin-bottom:10px;"><div>${i+1}. ${esc(q.q)}</div>` +
+          q.opts.map((o,oi)=>`<div style="font-size:0.82rem; color:${oi===q.a?'#a8e6bf':'var(--muted)'}; padding:2px 0;">${oi===q.a?'✓ ':'&nbsp;&nbsp;&nbsp;'}${esc(o)}</div>`).join('') +
+        `</div>`).join('') +
+        '<button class="btn" onclick="saveExamSet()">Save This Exam</button>';
+    }catch(err){
+      previewBox.innerHTML = '<div class="msg err show">Could not read that file. Make sure it is a .docx file.</div>';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+async function saveExamSet(){
+  const msg = document.getElementById('ex-upload-msg');
+  const courseId = document.getElementById('ex-upload-course').value;
+  const qs = window.__pendingExamQuestions || [];
+  if(qs.length===0){ showMsg(msg,'Nothing to save.','err'); return; }
+  const saved = await fsSet('examsets', courseId, { questions: qs });
+  if(!saved){ showMsg(msg,'Save failed. Please try again.','err'); return; }
+  showMsg(msg, 'Exam saved for this course.', 'ok');
+  document.getElementById('ex-preview').innerHTML = '';
+  loadCourses();
+}
+
+/* ---- Bible School: enrollments & results ---- */
+async function loadEnrollments(){
+  const enrolls = await fsList('enrollments');
+  document.querySelector('#enrollments-table tbody').innerHTML = enrolls.map(e=>
+    `<tr><td>${esc(e.name)}</td><td>${esc(e.phone)}</td><td><span class="badge">${esc(e.role)}</span></td><td>${esc(e.courseName)}</td></tr>`
+  ).join('') || '<tr><td colspan="4" style="color:var(--muted);">No enrollments yet.</td></tr>';
+}
+async function loadExamResults(){
+  const results = await fsList('examresults');
+  results.sort((a,b)=> (b._createdAt?.seconds||0) - (a._createdAt?.seconds||0));
+  document.querySelector('#examresults-table tbody').innerHTML = results.map(r=>
+    `<tr><td>${esc(r.name)}</td><td>${esc(r.courseName)}</td><td><span class="badge">${r.score}%</span></td></tr>`
+  ).join('') || '<tr><td colspan="3" style="color:var(--muted);">No exam results yet.</td></tr>';
+}
+
 async function loadAll(){
   await loadMembers();
   await loadSermons();
@@ -281,5 +424,10 @@ async function loadAll(){
   await loadTestimonies();
   await loadGiving();
   await loadAboutFields();
+  await loadSchoolFee();
+  await loadPasscodes();
+  await loadCourses();
+  await loadEnrollments();
+  await loadExamResults();
   if(currentAdmin.role==='super') await loadAdmins();
 }

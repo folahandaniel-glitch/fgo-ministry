@@ -6,20 +6,25 @@ real, regardless of where the site is hosted.
 
 ## What's included
 
-- **Home, About, Wings, Sermons, Events, Give, Testimonies, Register, Contact** — public pages
+- **Home, About, Wings, Sermons, Bible School, Events, Give, Testimonies, Register, Contact** — public pages
+- **Bible School** — courses, enrollment, passcode- or payment-gated exams, and
+  DOCX question upload (mark the correct option with `*`) from the Admin panel
 - **Admin panel** (`admin.html`) — login, member/welfare list, sermon publishing,
   event creation with ticketing, testimony moderation, giving overview,
-  Paystack setup, About page content editor, and admin account management
+  Paystack setup, Bible School management (fee, passcodes, courses, exam
+  uploads, enrollments, results), About page content editor, and admin
+  account management
 - **Firestore as the database** — works from any hosting, not just inside Claude
-- **Paystack integration** for online giving and paid event tickets
+- **Real Firebase Authentication** for admin sign-in — see the Security section below
+- **Paystack integration** for online giving, paid event tickets, and Bible
+  School fees
 - **Tentative wing logos** (SVG) for CROP, OLDV, TMII, TSM, TSAM, KAP — TLYI uses
   the real logo you provided. Replace any of these anytime by editing
   `js/wings-data.js`.
 
-**Not included yet, on purpose:** Bible School (courses/exams), Trivia, the
-Forum, and Pastor branch reporting. Those were real features in the earlier
-single-file app; they can be added to this proper multi-page structure in a
-follow-up pass now that the Firebase foundation is solid.
+**Not included yet, on purpose:** Trivia, the Forum, and Pastor branch
+reporting. Those were real features in the earlier single-file app; they can
+be added to this proper multi-page structure in a follow-up pass.
 
 ## Before you deploy: create the Super Admin
 
