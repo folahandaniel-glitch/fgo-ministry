@@ -37,6 +37,7 @@ async function fsDelete(collection, id){
 /* ---- Storage health check (shows a banner if Firestore isn't reachable) ---- */
 async function checkStorageHealth(){
   try{
+    if(typeof db === 'undefined'){ return true; } // this page doesn't use Firestore — nothing to check
     const testId = await fsAdd('_healthcheck', { ping: true });
     if(!testId) throw new Error('add failed');
     const back = await fsGet('_healthcheck', testId);

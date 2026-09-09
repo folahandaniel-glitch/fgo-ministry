@@ -69,6 +69,46 @@ service cloud.firestore {
       allow create: if true;
     }
 
+    // Bible School: courses and exam question sets are public to read
+    // (so the Bible School page can display them), admin-only to write.
+    match /courses/{id} {
+      allow read: if true;
+      allow write: if isActiveAdmin();
+    }
+    match /examsets/{id} {
+      allow read: if true;
+      allow write: if isActiveAdmin();
+    }
+
+    // Enrollments and exam results carry names/phone numbers/scores —
+    // admin-only read. Anyone can create one (enrolling or submitting an
+    // exam); no client-side edit path exists for these yet.
+    match /enrollments/{id} {
+      allow read: if isActiveAdmin();
+      allow create: if true;
+      allow update, delete: if isActiveAdmin();
+    }
+    match /examresults/{id} {
+      allow read: if isActiveAdmin();
+      allow create: if true;
+      allow update, delete: if isActiveAdmin();
+    }
+
+    // Access passcodes: anyone can read the code documents (needed to
+    // verify/consume a code when a student enters or pays for one) and
+    // mark one as used, but only in the narrow way the app actually
+    // does it — flipping "used" from false to true and attaching who
+    // used it. Only admins can generate fresh, unused codes.
+    match /passcodes/{code} {
+      allow read: if true;
+      allow create: if isActiveAdmin();
+      allow update: if isActiveAdmin()
+                    || (resource.data.used == false
+                        && request.resource.data.used == true
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used','usedBy','usedAt']));
+      allow delete: if isActiveAdmin();
+    }
+
     // Admin accounts. The very first document can only be created by
     // someone who has authenticated (via Firebase Auth itself, meaning
     // they know the password) as the one designated Super Admin email —

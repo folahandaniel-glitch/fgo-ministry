@@ -81,6 +81,61 @@
         <div style="overflow-x:auto;"><table id="sermons-table"><thead><tr><th>Title</th><th>Scripture</th><th></th></tr></thead><tbody></tbody></table></div>
       </div>
 
+      <!-- BIBLE SCHOOL -->
+      <div class="card sans" style="margin-top:22px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Bible School &mdash; Payment Setup</h3>
+        <label>Standard Fee Per Course (&#8358;)</label><input id="sf-amount" type="number" min="0">
+        <p class="small-note">Set to 0 to keep Bible School free and rely on manually issued passcodes only.</p>
+        <button class="btn" onclick="saveSchoolFee()">Save Fee</button>
+        <div class="msg" id="sf-msg"></div>
+      </div>
+
+      <div class="card sans" style="margin-top:12px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Bible School &mdash; Generate Access Passcodes</h3>
+        <p class="small-note">Share these with students yourself (e.g. via WhatsApp) after they pay or register offline. Each code works once.</p>
+        <label>How many passcodes to generate?</label><input id="pc-qty" type="number" min="1" value="5">
+        <button class="btn" onclick="generatePasscodes()">Generate Passcodes</button>
+        <div class="msg" id="pc-msg"></div>
+        <div style="overflow-x:auto; margin-top:16px;"><table id="passcodes-table"><thead><tr><th>Code</th><th>Status</th><th>Used By</th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <div class="card sans" style="margin-top:12px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Bible School &mdash; Add a Course</h3>
+        <label>Course Name</label><input id="co-name" placeholder="e.g. Church Administration">
+        <label>Short Description</label><input id="co-desc">
+        <button class="btn" onclick="createCourse()">Add Course</button>
+        <div class="msg" id="co-msg"></div>
+      </div>
+      <div class="card sans" style="margin-top:12px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Manage Courses</h3>
+        <div style="overflow-x:auto;"><table id="courses-table"><thead><tr><th>Course</th><th>Description</th><th>Exam Qs</th><th></th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <div class="card sans" style="margin-top:12px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Upload Exam Questions (.docx)</h3>
+        <p class="small-note" style="margin-top:0;">Number each question, list options as A) B) C) D), and place an asterisk (*) directly before the correct option's letter:</p>
+        <pre class="sans" style="background:#0A1523; padding:10px; border-radius:6px; font-size:0.75rem; color:var(--muted); white-space:pre-wrap;">1. What is the fear of the Lord?
+A) Terror of God
+*B) Reverence and awe of God
+C) Avoiding church
+D) A myth</pre>
+        <label>Course</label>
+        <select id="ex-upload-course"></select>
+        <label>Choose .docx File</label><input id="ex-upload-file" type="file" accept=".docx">
+        <button class="btn outline" onclick="parseExamDocx()">Preview Questions</button>
+        <div id="ex-preview" style="margin-top:14px;"></div>
+        <div class="msg" id="ex-upload-msg"></div>
+      </div>
+
+      <div class="card sans" style="margin-top:12px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Bible School Enrollments</h3>
+        <div style="overflow-x:auto;"><table id="enrollments-table"><thead><tr><th>Name</th><th>Phone</th><th>Role</th><th>Course</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="card sans" style="margin-top:12px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Exam Results</h3>
+        <div style="overflow-x:auto;"><table id="examresults-table"><thead><tr><th>Name</th><th>Course</th><th>Score</th></tr></thead><tbody></tbody></table></div>
+      </div>
+
       <!-- EVENTS -->
       <div class="card sans" style="margin-top:22px;">
         <h3 style="border:none; color:#fff; font-weight:400;">Create an Event</h3>
@@ -159,6 +214,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.11.0/mammoth.browser.min.js"></script>
 <script src="js/firebase-config.js"></script>
 <script src="js/app.js"></script>
 <script src="js/admin.js"></script>
