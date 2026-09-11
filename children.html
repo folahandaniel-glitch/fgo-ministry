@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Children's Department — Fodan Gospel Outreach</title>
+<meta name="description" content="Sequential, graphical Bible stories for children at Fodan Gospel Outreach.">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .kids-wrap{
+    --kblue:#2E86DE; --kyellow:#FFC93C; --kgreen:#2ECC71; --kpink:#FF6FA5; --korange:#FF9F43;
+    background:linear-gradient(180deg,#12294A,#0B1626);
+    border-radius:16px; padding:22px; border:1px solid rgba(255,201,60,0.3);
+  }
+  .kid-lesson-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:14px; margin-top:16px;}
+  .kid-lesson-card{
+    background:linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+    border:2px solid rgba(255,201,60,0.35); border-radius:16px; padding:16px; text-align:center; cursor:pointer;
+    font-family:-apple-system,sans-serif; transition:transform .15s ease;
+  }
+  .kid-lesson-card:hover{transform:translateY(-3px); border-color:var(--kyellow);}
+  .kid-lesson-card .num{width:34px;height:34px;border-radius:50%;background:var(--kyellow);color:#241a02;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:0.9rem;}
+  .kid-lesson-card .ico{width:64px;height:64px;margin:0 auto 8px;}
+  .kid-lesson-card .title{color:#fff;font-weight:700;font-size:0.95rem;}
+  .kid-lesson-card .scr{color:var(--kyellow);font-size:0.72rem;margin-top:3px;}
+  .kid-panel-box{
+    background:linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
+    border:2px solid var(--kyellow); border-radius:18px; padding:26px; text-align:center; margin-top:16px;
+  }
+  .kid-panel-box .ico-big{width:150px;height:150px;margin:0 auto 16px;}
+  .kid-panel-box .panel-text{font-family:-apple-system,sans-serif; font-size:1.15rem; color:#fff; max-width:480px; margin:0 auto; line-height:1.55;}
+  .kid-dots{display:flex; justify-content:center; gap:7px; margin:18px 0;}
+  .kid-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.25);}
+  .kid-dot.active{background:var(--kyellow);}
+  .kid-nav-row{display:flex; justify-content:center; gap:12px; margin-top:6px;}
+  .kid-btn{font-family:-apple-system,sans-serif; font-weight:800; border:none; border-radius:26px; padding:11px 22px; cursor:pointer; font-size:0.9rem;}
+  .kid-btn.primary{background:var(--kyellow); color:#241a02;}
+  .kid-btn.secondary{background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.25);}
+  .kid-btn:disabled{opacity:0.35; cursor:default;}
+</style>
+</head>
+<body>
+
+<div id="storage-warning" class="hidden sans" style="background:#8E1B2B;color:#fff;text-align:center;padding:10px 16px;font-size:0.82rem;">
+  &#9888; We're having trouble connecting right now. Some features may not save. Please try again shortly.
+</div>
+
+<header class="site-header">
+  <div class="nav-row">
+    <a href="index.html" class="brand">
+      <img src="assets/images/fgo-logo.png" alt="Fodan Gospel Outreach">
+      <div><div class="name">FODAN GOSPEL OUTREACH</div><div class="tag">Raising Youth, Families &amp; Generations for Christ</div></div>
+    </a>
+    <button id="nav-toggle">&#9776;</button>
+    <nav class="main-nav" id="main-nav">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="wings.html">Wings</a>
+      <a href="children.html" class="active">Children</a>
+      <a href="sermons.html">Sermons</a>
+      <a href="bible-school.html">Bible School</a>
+      <a href="trivia.html">Trivia</a>
+      <a href="forum.html">Forum</a>
+      <a href="events.html">Events</a>
+      <a href="testimonies.html">Testimonies</a>
+      <a href="register.html">Register</a>
+      <a href="contact.html">Contact</a>
+      <a href="give.html" class="give-link">Give</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero page-hero">
+  <div class="eyebrow">CROP &middot; Children's Department</div>
+  <h1>Bible Stories, One Step at a Time</h1>
+  <p class="lead">Sequential, picture-led Bible lessons for our children. Tap a story to begin.</p>
+</section>
+
+<section style="padding-top:0;">
+  <div class="wrap">
+    <div class="kids-wrap">
+      <img src="assets/images/children-banner.jpg" alt="Every Child, Every Potential, Every Future" style="width:100%; border-radius:14px; margin-bottom:18px; border:2px solid rgba(255,201,60,0.35);">
+
+      <div id="kid-lesson-list">
+        <div class="kid-lesson-grid" id="kid-lesson-grid"></div>
+      </div>
+
+      <div id="kid-panel-view" class="hidden">
+        <button class="kid-btn secondary" onclick="closeKidLesson()">&larr; All Stories</button>
+        <h2 id="kid-lesson-title" style="color:#fff; margin:14px 0 0; text-align:center; font-weight:400;"></h2>
+        <div id="kid-lesson-scripture" style="text-align:center; color:var(--kyellow); font-family:-apple-system,sans-serif; font-size:0.8rem;"></div>
+
+        <div class="kid-panel-box">
+          <div class="ico-big" id="kid-panel-icon"></div>
+          <div class="panel-text" id="kid-panel-text"></div>
+        </div>
+        <div class="kid-dots" id="kid-dots"></div>
+        <div class="kid-nav-row">
+          <button class="kid-btn secondary" id="kid-prev" onclick="kidPanelNav(-1)">&larr; Back</button>
+          <button class="kid-btn primary" id="kid-next" onclick="kidPanelNav(1)">Next &rarr;</button>
+        </div>
+        <div style="text-align:center; margin-top:16px;">
+          <label style="max-width:260px; margin:0 auto;">Child's Name</label>
+          <input id="kid-child-name" placeholder="Your name" style="max-width:260px; margin:0 auto 10px;">
+          <button class="kid-btn primary hidden" id="kid-complete-btn" onclick="completeKidLesson()">I Finished This Story! &#127881;</button>
+          <div class="msg" id="kid-msg"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="tagline">&ldquo;Raising Youth With Fire, Families With Light, and Generations With Christ.&rdquo;</div>
+  <div>FODAN GOSPEL OUTREACH &middot; The Living Youth International</div>
+  <div class="socials"><a href="https://bit.ly/4rSowUy" target="_blank">Website</a> &middot; <a href="tel:08067578112">08067578112</a> &middot; <a href="mailto:folahandaniel@gmail.com">Email</a></div>
+  <div style="margin-top:10px;">JESUS IS LORD.</div>
+  <div style="margin-top:16px; font-size:0.7rem; opacity:0.6;">&copy; <span id="year"></span> Fodan Gospel Outreach. All rights reserved. &middot; <a href="admin.html" style="color:inherit; opacity:0.7;">Admin</a></div>
+</footer>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/kids-data.js"></script>
+<script>
+document.getElementById('year').textContent = new Date().getFullYear();
+let currentKidLesson = null, currentKidPanel = 0;
+
+async function getKidLessons(){
+  const lessons = await fsList('kidlessons');
+  lessons.sort((a,b)=> (a.order||0) - (b.order||0));
+  return lessons;
+}
+
+async function renderKidLessons(){
+  const lessons = await getKidLessons();
+  const grid = document.getElementById('kid-lesson-grid');
+  if(lessons.length===0){ grid.innerHTML = '<p class="sans" style="grid-column:1/-1; color:#cbd5e1;">No Bible story lessons published yet. Check back soon!</p>'; return; }
+  grid.innerHTML = lessons.map((l,i)=>`
+    <div class="kid-lesson-card" onclick="openKidLesson('${l.id}')">
+      <div class="num">${l.order || (i+1)}</div>
+      <div class="ico">${kidIconSVG((l.panels[0] && l.panels[0].icon) || 'star', 64)}</div>
+      <div class="title">${esc(l.title)}</div>
+      <div class="scr">${esc(l.scripture||'')}</div>
+    </div>
+  `).join('');
+}
+
+async function openKidLesson(id){
+  const lessons = await getKidLessons();
+  currentKidLesson = lessons.find(l=>l.id===id);
+  currentKidPanel = 0;
+  document.getElementById('kid-lesson-list').classList.add('hidden');
+  document.getElementById('kid-panel-view').classList.remove('hidden');
+  document.getElementById('kid-lesson-title').textContent = currentKidLesson.title;
+  document.getElementById('kid-lesson-scripture').textContent = currentKidLesson.scripture || '';
+  renderKidAttachment();
+  renderKidPanel();
+}
+
+function renderKidAttachment(){
+  let box = document.getElementById('kid-attachment-box');
+  if(!box){
+    box = document.createElement('div');
+    box.id = 'kid-attachment-box';
+    box.style.textAlign = 'center';
+    box.className = 'sans';
+    document.getElementById('kid-lesson-scripture').insertAdjacentElement('afterend', box);
+  }
+  const att = currentKidLesson.attachment;
+  if(!att){ box.innerHTML=''; return; }
+  if(att.link){
+    box.innerHTML = `<a href="${esc(att.link)}" target="_blank" class="kid-btn secondary" style="display:inline-block; margin-top:10px; text-decoration:none;">&#127909; Watch / Listen</a>`;
+  } else if(att.mimeType && att.mimeType.startsWith('audio')){
+    box.innerHTML = `<audio controls src="data:${att.mimeType};base64,${att.data}" style="margin-top:10px; max-width:320px;"></audio>`;
+  } else if(att.mimeType && att.mimeType.startsWith('video')){
+    box.innerHTML = `<video controls src="data:${att.mimeType};base64,${att.data}" style="margin-top:10px; max-width:100%; border-radius:8px;"></video>`;
+  } else {
+    box.innerHTML = `<button class="kid-btn secondary" style="margin-top:10px;" onclick="downloadKidAttachment()">&#128196; Download Materials</button>`;
+  }
+}
+function downloadKidAttachment(){
+  const att = currentKidLesson.attachment;
+  if(!att || att.link) return;
+  const byteChars = atob(att.data);
+  const bytes = new Uint8Array(byteChars.length);
+  for(let i=0;i<byteChars.length;i++) bytes[i] = byteChars.charCodeAt(i);
+  const blob = new Blob([bytes], { type: att.mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=att.name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function closeKidLesson(){
+  document.getElementById('kid-panel-view').classList.add('hidden');
+  document.getElementById('kid-lesson-list').classList.remove('hidden');
+}
+
+function renderKidPanel(){
+  const panels = currentKidLesson.panels || [];
+  const p = panels[currentKidPanel];
+  document.getElementById('kid-panel-icon').innerHTML = kidIconSVG(p.icon, 150);
+  document.getElementById('kid-panel-text').textContent = p.text;
+  document.getElementById('kid-dots').innerHTML = panels.map((_,i)=>`<div class="kid-dot ${i===currentKidPanel?'active':''}"></div>`).join('');
+  document.getElementById('kid-prev').disabled = currentKidPanel===0;
+  const isLast = currentKidPanel === panels.length-1;
+  document.getElementById('kid-next').textContent = isLast ? 'Finish' : 'Next \u2192';
+  document.getElementById('kid-complete-btn').classList.toggle('hidden', !isLast);
+}
+function kidPanelNav(dir){
+  const panels = currentKidLesson.panels || [];
+  if(dir===1 && currentKidPanel === panels.length-1) return;
+  currentKidPanel = Math.max(0, Math.min(panels.length-1, currentKidPanel+dir));
+  renderKidPanel();
+}
+async function completeKidLesson(){
+  const name = document.getElementById('kid-child-name').value.trim();
+  const msg = document.getElementById('kid-msg');
+  if(!name){ showMsg(msg,'Enter your name first!','err'); return; }
+  await fsAdd('kidprogress', { child:name, lessonId: currentKidLesson.id, lessonTitle: currentKidLesson.title });
+  showMsg(msg,'Well done! Story marked complete.','ok');
+}
+
+renderKidLessons();
+</script>
+</body>
+</html>

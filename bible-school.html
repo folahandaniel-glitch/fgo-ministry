@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bible School — Fodan Gospel Outreach</title>
+<meta name="description" content="FGO Bible School — courses for Intern Pastors, Pastors, and Workers.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="storage-warning" class="hidden sans" style="background:#8E1B2B;color:#fff;text-align:center;padding:10px 16px;font-size:0.82rem;">
+  &#9888; We're having trouble connecting right now. Some features may not save. Please try again shortly.
+</div>
+
+<header class="site-header">
+  <div class="nav-row">
+    <a href="index.html" class="brand">
+      <img src="assets/images/fgo-logo.png" alt="Fodan Gospel Outreach">
+      <div><div class="name">FODAN GOSPEL OUTREACH</div><div class="tag">Raising Youth, Families &amp; Generations for Christ</div></div>
+    </a>
+    <button id="nav-toggle">&#9776;</button>
+    <nav class="main-nav" id="main-nav">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="wings.html">Wings</a>
+      <a href="children.html">Children</a>
+      <a href="sermons.html">Sermons</a>
+      <a href="bible-school.html" class="active">Bible School</a>
+      <a href="trivia.html">Trivia</a>
+      <a href="forum.html">Forum</a>
+      <a href="events.html">Events</a>
+      <a href="testimonies.html">Testimonies</a>
+      <a href="register.html">Register</a>
+      <a href="contact.html">Contact</a>
+      <a href="give.html" class="give-link">Give</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero page-hero">
+  <div class="eyebrow">FGO Bible School</div>
+  <h1>Courses for Intern Pastors, Pastors &amp; Workers</h1>
+  <p class="lead">Enroll in a course, then return here to sit the exam once you've studied. Studying materials and sitting exams requires an access passcode or a one-time course fee.</p>
+</section>
+
+<section style="padding-top:0;">
+  <div class="wrap">
+    <div class="grid cols-3" id="course-list"><p class="sans" style="color:var(--muted);">Loading courses...</p></div>
+
+    <!-- ENROLL -->
+    <div class="card hidden" id="enroll-box" style="margin-top:24px;">
+      <h3 style="border:none; color:#fff; font-weight:400;" id="enroll-title">Enroll</h3>
+      <label>Full Name</label><input id="e-name">
+      <label>Phone Number</label><input id="e-phone">
+      <label>Role</label>
+      <select id="e-role"><option>Intern Pastor</option><option>Ordained Pastor</option><option>Church Worker</option><option>Member</option></select>
+
+      <div id="e-pay-option" class="hidden" style="margin-top:16px; padding-top:14px; border-top:1px solid var(--line);">
+        <p class="small-note" style="margin:0 0 8px;">Pay the course fee now to unlock study materials and the exam instantly.</p>
+        <button class="btn crimson" id="e-pay-btn" onclick="payForEnrollment()">Pay <span id="e-fee-label"></span> &amp; Enroll</button>
+      </div>
+
+      <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--line);">
+        <label>Or, Already Have an Access Passcode?</label><input id="e-passcode" placeholder="Enter your passcode">
+        <p class="small-note">Contact the ministry if you'd rather pay offline and receive a passcode.</p>
+        <button class="btn outline" onclick="enrollCourse()">Enroll With Passcode</button>
+      </div>
+      <button class="btn outline" onclick="closeEnroll()">Cancel</button>
+      <div class="msg" id="e-msg"></div>
+    </div>
+
+    <!-- EXAM -->
+    <div class="card hidden" id="exam-box" style="margin-top:24px;">
+      <h3 style="border:none; color:#fff; font-weight:400;" id="exam-title">Exam</h3>
+
+      <div id="exam-locked-gate">
+        <p class="lead sans" style="text-align:left; font-size:0.9rem;">This exam requires an access passcode.</p>
+        <label>Your Name</label><input id="xg-name">
+        <div id="xg-pay-option" class="hidden" style="margin:10px 0;">
+          <button class="btn crimson" onclick="payForExamAccess()">Pay <span id="xg-fee-label"></span> &amp; Unlock Instantly</button>
+        </div>
+        <label>Or Enter Your Passcode</label><input id="xg-passcode">
+        <button class="btn outline" onclick="unlockExam()">Unlock With Passcode</button>
+        <div class="msg" id="xg-msg"></div>
+      </div>
+
+      <div id="exam-content" class="hidden">
+        <label>Your Name</label><input id="x-name">
+        <div id="exam-questions"></div>
+        <button class="btn crimson" onclick="submitExam()">Submit Exam</button>
+        <button class="btn outline" onclick="closeExam()">Cancel</button>
+        <div class="msg" id="x-msg"></div>
+      </div>
+    </div>
+    <!-- MATERIALS -->
+    <div class="card hidden" id="materials-box" style="margin-top:24px;">
+      <h3 style="border:none; color:#fff; font-weight:400;" id="materials-title">Course Materials</h3>
+
+      <div id="materials-locked-gate">
+        <p class="lead sans" style="text-align:left; font-size:0.9rem;">Course materials require an access passcode.</p>
+        <label>Your Name</label><input id="mg-name">
+        <div id="mg-pay-option" class="hidden" style="margin:10px 0;">
+          <button class="btn crimson" onclick="payForMaterialsAccess()">Pay <span id="mg-fee-label"></span> &amp; Unlock Instantly</button>
+        </div>
+        <label>Or Enter Your Passcode</label><input id="mg-passcode">
+        <button class="btn outline" onclick="unlockMaterials()">Unlock With Passcode</button>
+        <div class="msg" id="mg-msg"></div>
+      </div>
+
+      <div id="materials-content" class="hidden">
+        <div id="materials-list"></div>
+      </div>
+      <button class="btn outline" style="margin-top:14px;" onclick="closeMaterials()">Close</button>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="tagline">&ldquo;Raising Youth With Fire, Families With Light, and Generations With Christ.&rdquo;</div>
+  <div>FODAN GOSPEL OUTREACH &middot; The Living Youth International</div>
+  <div class="socials"><a href="https://bit.ly/4rSowUy" target="_blank">Website</a> &middot; <a href="tel:08067578112">08067578112</a> &middot; <a href="mailto:folahandaniel@gmail.com">Email</a></div>
+  <div style="margin-top:10px;">JESUS IS LORD.</div>
+  <div style="margin-top:16px; font-size:0.7rem; opacity:0.6;">&copy; <span id="year"></span> Fodan Gospel Outreach. All rights reserved. &middot; <a href="admin.html" style="color:inherit; opacity:0.7;">Admin</a></div>
+</footer>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/app.js"></script>
+<script>
+document.getElementById('year').textContent = new Date().getFullYear();
+let studentAccessGranted = false;
+let currentCourse = null, currentCourseObj = null;
+
+async function getCourses(){ return await fsList('courses'); }
+
+async function renderCourses(){
+  const courses = await getCourses();
+  const wrap = document.getElementById('course-list');
+  if(courses.length===0){ wrap.innerHTML = '<p class="sans" style="color:var(--muted);grid-column:1/-1;">No courses published yet. Check back soon.</p>'; return; }
+  wrap.innerHTML = courses.map(c=>`
+    <div class="card">
+      <h3 style="color:#fff; font-weight:400; margin:0 0 6px;">${esc(c.name)}</h3>
+      <p class="small-note" style="margin:0 0 14px;">${esc(c.desc||'')}</p>
+      <button class="btn small" onclick="openEnroll('${c.id}')">Enroll</button>
+      <button class="btn small outline" onclick="openExam('${c.id}')" style="margin-left:6px;">Take Exam</button>
+      <button class="btn small outline" onclick="openMaterials('${c.id}')" style="margin-left:6px; margin-top:6px;">Materials</button>
+    </div>
+  `).join('');
+}
+
+async function findCourse(id){
+  const courses = await getCourses();
+  return courses.find(c=>c.id===id);
+}
+
+async function getSchoolFee(){
+  const cfg = await fsGet('config', 'schoolfee');
+  return cfg ? cfg.amount : 0;
+}
+
+async function refreshPayOption(wrapId, labelId){
+  const fee = await getSchoolFee();
+  const cfg = await fsGet('config', 'paystack');
+  const wrap = document.getElementById(wrapId);
+  const canPay = fee > 0 && cfg && cfg.key;
+  wrap.classList.toggle('hidden', !canPay);
+  if(canPay) document.getElementById(labelId).textContent = '₦' + fee.toLocaleString();
+}
+
+async function openEnroll(id){
+  currentCourse = id;
+  currentCourseObj = await findCourse(id);
+  document.getElementById('enroll-title').textContent = 'Enroll — ' + currentCourseObj.name;
+  document.getElementById('enroll-box').classList.remove('hidden');
+  document.getElementById('exam-box').classList.add('hidden');
+  await refreshPayOption('e-pay-option', 'e-fee-label');
+  document.getElementById('enroll-box').scrollIntoView({behavior:'smooth'});
+}
+function closeEnroll(){ document.getElementById('enroll-box').classList.add('hidden'); }
+
+function randomPasscode(){
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for(let i=0;i<8;i++) code += chars[Math.floor(Math.random()*chars.length)];
+  return code;
+}
+async function verifyAndUsePasscode(code, name){
+  code = (code||'').trim().toUpperCase();
+  if(!code) return false;
+  const rec = await fsGet('passcodes', code);
+  if(!rec || rec.used) return false;
+  await fsSet('passcodes', code, { used:true, usedBy:name||'Unknown', usedAt:new Date().toISOString() });
+  studentAccessGranted = true;
+  return true;
+}
+async function generatePaidPasscode(name){
+  const code = randomPasscode();
+  await fsSet('passcodes', code, { code, used:true, usedBy:name, usedAt:new Date().toISOString() });
+  studentAccessGranted = true;
+  return code;
+}
+
+function payWithPaystack(name, email, amount, purpose){
+  return new Promise((resolve, reject)=>{
+    fsGet('config','paystack').then(cfg=>{
+      if(!cfg || !cfg.key){ reject('Online payment is not configured yet.'); return; }
+      if(typeof PaystackPop === 'undefined'){ reject('Payment system failed to load.'); return; }
+      const handler = PaystackPop.setup({
+        key: cfg.key, email: email || 'no-reply@fgo.church', amount: Math.round(amount*100), currency:'NGN',
+        metadata:{ name, purpose },
+        callback: function(response){ resolve(response.reference); },
+        onClose: function(){ reject('Payment window closed.'); }
+      });
+      handler.openIframe();
+    });
+  });
+}
+
+async function enrollCourse(){
+  const name = document.getElementById('e-name').value.trim();
+  const phone = document.getElementById('e-phone').value.trim();
+  const passcode = document.getElementById('e-passcode').value.trim();
+  const msg = document.getElementById('e-msg');
+  if(!name || !phone){ showMsg(msg,'Enter name and phone number.','err'); return; }
+  if(!studentAccessGranted){
+    const ok = await verifyAndUsePasscode(passcode, name);
+    if(!ok){ showMsg(msg,'Invalid or already-used passcode. Contact the ministry to obtain yours.','err'); return; }
+  }
+  await fsAdd('enrollments', { name, phone, role: document.getElementById('e-role').value, courseId: currentCourse, courseName: currentCourseObj.name });
+  showMsg(msg, 'Enrollment confirmed for ' + currentCourseObj.name + '.', 'ok');
+}
+
+async function payForEnrollment(){
+  const name = document.getElementById('e-name').value.trim();
+  const phone = document.getElementById('e-phone').value.trim();
+  const msg = document.getElementById('e-msg');
+  if(!name || !phone){ showMsg(msg,'Enter your name and phone number first.','err'); return; }
+  const fee = await getSchoolFee();
+  try{
+    const reference = await payWithPaystack(name, '', fee, currentCourseObj.name + ' Enrollment');
+    await fsAdd('gifts', { name, email:'', purpose:'Bible School Fees', amount: fee, reference });
+    await generatePaidPasscode(name);
+    await fsAdd('enrollments', { name, phone, role: document.getElementById('e-role').value, courseId: currentCourse, courseName: currentCourseObj.name });
+    showMsg(msg, 'Payment received. You are enrolled and unlocked for ' + currentCourseObj.name + '.', 'ok');
+  }catch(err){
+    showMsg(msg, typeof err === 'string' ? err : 'Payment was not completed.', 'err');
+  }
+}
+
+async function getExamQuestions(courseId){
+  const set = await fsGet('examsets', courseId);
+  return (set && set.questions) ? set.questions : [];
+}
+
+async function renderExamQuestions(courseId){
+  const qs = await getExamQuestions(courseId);
+  const wrap = document.getElementById('exam-questions');
+  if(qs.length===0){ wrap.innerHTML = '<p class="sans" style="color:var(--muted);">No exam questions are available for this course yet.</p>'; return; }
+  wrap.innerHTML = qs.map((q,qi)=>`
+    <div style="margin-bottom:18px; padding-bottom:14px; border-bottom:1px solid var(--line);">
+      <div class="sans" style="margin-bottom:8px;">${qi+1}. ${esc(q.q)}</div>
+      ${q.opts.map((o,oi)=>`<label class="sans" style="display:flex; align-items:center; gap:8px; padding:5px 0; color:var(--muted);"><input type="radio" name="q${qi}" value="${oi}" style="width:auto;"> ${esc(o)}</label>`).join('')}
+    </div>
+  `).join('');
+}
+
+async function openExam(courseId){
+  currentCourse = courseId;
+  currentCourseObj = await findCourse(courseId);
+  document.getElementById('exam-title').textContent = 'Exam — ' + currentCourseObj.name;
+  document.getElementById('exam-box').classList.remove('hidden');
+  document.getElementById('enroll-box').classList.add('hidden');
+  if(!studentAccessGranted){
+    document.getElementById('exam-locked-gate').classList.remove('hidden');
+    document.getElementById('exam-content').classList.add('hidden');
+    await refreshPayOption('xg-pay-option', 'xg-fee-label');
+    document.getElementById('exam-box').scrollIntoView({behavior:'smooth'});
+    return;
+  }
+  await renderExamQuestions(courseId);
+  document.getElementById('exam-locked-gate').classList.add('hidden');
+  document.getElementById('exam-content').classList.remove('hidden');
+  document.getElementById('exam-box').scrollIntoView({behavior:'smooth'});
+}
+function closeExam(){ document.getElementById('exam-box').classList.add('hidden'); }
+
+async function unlockExam(){
+  const name = document.getElementById('xg-name').value.trim();
+  const code = document.getElementById('xg-passcode').value.trim();
+  const msg = document.getElementById('xg-msg');
+  if(!name || !code){ showMsg(msg,'Enter your name and passcode.','err'); return; }
+  const ok = await verifyAndUsePasscode(code, name);
+  if(!ok){ showMsg(msg,'Invalid or already-used passcode.','err'); return; }
+  await renderExamQuestions(currentCourse);
+  document.getElementById('exam-locked-gate').classList.add('hidden');
+  document.getElementById('exam-content').classList.remove('hidden');
+  document.getElementById('x-name').value = name;
+}
+async function payForExamAccess(){
+  const name = document.getElementById('xg-name').value.trim();
+  const msg = document.getElementById('xg-msg');
+  if(!name){ showMsg(msg,'Enter your name first.','err'); return; }
+  const fee = await getSchoolFee();
+  try{
+    const reference = await payWithPaystack(name, '', fee, currentCourseObj.name + ' Exam Access');
+    await fsAdd('gifts', { name, email:'', purpose:'Bible School Fees', amount: fee, reference });
+    await generatePaidPasscode(name);
+    await renderExamQuestions(currentCourse);
+    document.getElementById('exam-locked-gate').classList.add('hidden');
+    document.getElementById('exam-content').classList.remove('hidden');
+    document.getElementById('x-name').value = name;
+  }catch(err){
+    showMsg(msg, typeof err === 'string' ? err : 'Payment was not completed.', 'err');
+  }
+}
+
+async function submitExam(){
+  const name = document.getElementById('x-name').value.trim();
+  const msg = document.getElementById('x-msg');
+  if(!name){ showMsg(msg,'Enter your name before submitting.','err'); return; }
+  const qs = await getExamQuestions(currentCourse);
+  let correct = 0;
+  qs.forEach((q,qi)=>{
+    const sel = document.querySelector(`input[name="q${qi}"]:checked`);
+    if(sel && parseInt(sel.value) === q.a) correct++;
+  });
+  const score = qs.length ? Math.round((correct/qs.length)*100) : 0;
+  await fsAdd('examresults', { name, courseId: currentCourse, courseName: currentCourseObj.name, score, correct, total: qs.length });
+  showMsg(msg, `Exam submitted. Score: ${score}% (${correct}/${qs.length} correct).`, 'ok');
+}
+
+async function getMaterials(courseId){
+  const all = await fsList('coursematerials');
+  return all.filter(m=>m.courseId===courseId);
+}
+
+async function openMaterials(courseId){
+  currentCourse = courseId;
+  currentCourseObj = await findCourse(courseId);
+  document.getElementById('materials-title').textContent = 'Course Materials — ' + currentCourseObj.name;
+  document.getElementById('materials-box').classList.remove('hidden');
+  document.getElementById('enroll-box').classList.add('hidden');
+  document.getElementById('exam-box').classList.add('hidden');
+  if(!studentAccessGranted){
+    document.getElementById('materials-locked-gate').classList.remove('hidden');
+    document.getElementById('materials-content').classList.add('hidden');
+    await refreshPayOption('mg-pay-option', 'mg-fee-label');
+    document.getElementById('materials-box').scrollIntoView({behavior:'smooth'});
+    return;
+  }
+  await renderMaterialsList(courseId);
+  document.getElementById('materials-locked-gate').classList.add('hidden');
+  document.getElementById('materials-content').classList.remove('hidden');
+  document.getElementById('materials-box').scrollIntoView({behavior:'smooth'});
+}
+function closeMaterials(){ document.getElementById('materials-box').classList.add('hidden'); }
+
+async function renderMaterialsList(courseId){
+  const materials = await getMaterials(courseId);
+  const wrap = document.getElementById('materials-list');
+  if(materials.length===0){ wrap.innerHTML = '<p class="sans" style="color:var(--muted);">No materials uploaded for this course yet.</p>'; return; }
+  wrap.innerHTML = materials.map(m=>`
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line);" class="sans">
+      <div>
+        <div style="color:var(--ivory);">${esc(m.name)}</div>
+        ${m.desc? `<div class="small-note">${esc(m.desc)}</div>` : ''}
+      </div>
+      <button class="btn small outline" onclick="downloadMaterial('${m.id}')">${m.link?'Open':'Download'}</button>
+    </div>
+  `).join('');
+}
+
+async function downloadMaterial(id){
+  const m = await fsGet('coursematerials', id);
+  if(!m) return;
+  if(m.link){ window.open(m.link, '_blank'); return; }
+  const byteChars = atob(m.data);
+  const bytes = new Uint8Array(byteChars.length);
+  for(let i=0;i<byteChars.length;i++) bytes[i] = byteChars.charCodeAt(i);
+  const blob = new Blob([bytes], { type: m.mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = m.name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+async function unlockMaterials(){
+  const name = document.getElementById('mg-name').value.trim();
+  const code = document.getElementById('mg-passcode').value.trim();
+  const msg = document.getElementById('mg-msg');
+  if(!name || !code){ showMsg(msg,'Enter your name and passcode.','err'); return; }
+  const ok = await verifyAndUsePasscode(code, name);
+  if(!ok){ showMsg(msg,'Invalid or already-used passcode.','err'); return; }
+  await renderMaterialsList(currentCourse);
+  document.getElementById('materials-locked-gate').classList.add('hidden');
+  document.getElementById('materials-content').classList.remove('hidden');
+}
+async function payForMaterialsAccess(){
+  const name = document.getElementById('mg-name').value.trim();
+  const msg = document.getElementById('mg-msg');
+  if(!name){ showMsg(msg,'Enter your name first.','err'); return; }
+  const fee = await getSchoolFee();
+  try{
+    const reference = await payWithPaystack(name, '', fee, currentCourseObj.name + ' Materials Access');
+    await fsAdd('gifts', { name, email:'', purpose:'Bible School Fees', amount: fee, reference });
+    await generatePaidPasscode(name);
+    await renderMaterialsList(currentCourse);
+    document.getElementById('materials-locked-gate').classList.add('hidden');
+    document.getElementById('materials-content').classList.remove('hidden');
+  }catch(err){
+    showMsg(msg, typeof err === 'string' ? err : 'Payment was not completed.', 'err');
+  }
+}
+
+renderCourses();
+</script>
+</body>
+</html>

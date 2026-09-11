@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bible Trivia — Fodan Gospel Outreach</title>
+<meta name="description" content="Play Bible trivia and climb the leaderboard at Fodan Gospel Outreach.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="storage-warning" class="hidden sans" style="background:#8E1B2B;color:#fff;text-align:center;padding:10px 16px;font-size:0.82rem;">
+  &#9888; We're having trouble connecting right now. Some features may not save. Please try again shortly.
+</div>
+
+<header class="site-header">
+  <div class="nav-row">
+    <a href="index.html" class="brand">
+      <img src="assets/images/fgo-logo.png" alt="Fodan Gospel Outreach">
+      <div><div class="name">FODAN GOSPEL OUTREACH</div><div class="tag">Raising Youth, Families &amp; Generations for Christ</div></div>
+    </a>
+    <button id="nav-toggle">&#9776;</button>
+    <nav class="main-nav" id="main-nav">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="wings.html">Wings</a>
+      <a href="children.html">Children</a>
+      <a href="sermons.html">Sermons</a>
+      <a href="bible-school.html">Bible School</a>
+      <a href="trivia.html" class="active">Trivia</a>
+      <a href="forum.html">Forum</a>
+      <a href="events.html">Events</a>
+      <a href="testimonies.html">Testimonies</a>
+      <a href="register.html">Register</a>
+      <a href="contact.html">Contact</a>
+      <a href="give.html" class="give-link">Give</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero page-hero">
+  <div class="eyebrow">Play &amp; Learn</div>
+  <h1>Bible Trivia</h1>
+  <p class="lead">Pick a topic, answer a few questions, see your score instantly.</p>
+</section>
+
+<section style="padding-top:0;">
+  <div class="wrap" style="max-width:760px;">
+
+    <!-- STEP 1: pick a category -->
+    <div id="tv-step-categories">
+      <div class="grid cols-2" id="trivia-category-list"><p class="sans" style="color:var(--muted);">Loading...</p></div>
+    </div>
+
+    <!-- STEP 2: play -->
+    <div class="card hidden" id="tv-step-play">
+      <h2 style="border:none; color:#fff; font-weight:400; margin-top:0;" id="tv-play-title"></h2>
+      <label>Your Name</label><input id="tv-player-name" placeholder="So we know who to put on the leaderboard">
+      <div id="tv-questions" style="margin-top:16px;"></div>
+      <button class="btn crimson" onclick="submitTrivia()">Submit Answers</button>
+      <button class="btn outline" onclick="backToCategories()">Cancel</button>
+      <div class="msg" id="tv-play-msg"></div>
+    </div>
+
+    <!-- STEP 3: result + leaderboard -->
+    <div class="card hidden" id="tv-step-result" style="text-align:center;">
+      <div class="eyebrow">Your Score</div>
+      <div id="tv-score-display" style="font-size:2.4rem; color:var(--gold-soft); font-family:-apple-system,sans-serif; font-weight:700;"></div>
+      <div id="tv-score-sub" class="small-note" style="margin-bottom:20px;"></div>
+      <h3 style="border:none; color:#fff; font-weight:400;">Leaderboard</h3>
+      <div style="overflow-x:auto;"><table id="tv-leaderboard-table"><thead><tr><th>#</th><th>Name</th><th>Score</th></tr></thead><tbody></tbody></table></div>
+      <button class="btn outline" style="margin-top:18px;" onclick="backToCategories()">Play Another Category</button>
+    </div>
+
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="tagline">&ldquo;Raising Youth With Fire, Families With Light, and Generations With Christ.&rdquo;</div>
+  <div>FODAN GOSPEL OUTREACH &middot; The Living Youth International</div>
+  <div class="socials"><a href="https://bit.ly/4rSowUy" target="_blank">Website</a> &middot; <a href="tel:08067578112">08067578112</a> &middot; <a href="mailto:folahandaniel@gmail.com">Email</a></div>
+  <div style="margin-top:10px;">JESUS IS LORD.</div>
+  <div style="margin-top:16px; font-size:0.7rem; opacity:0.6;">&copy; <span id="year"></span> Fodan Gospel Outreach. All rights reserved. &middot; <a href="admin.html" style="color:inherit; opacity:0.7;">Admin</a></div>
+</footer>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/app.js"></script>
+<script>
+document.getElementById('year').textContent = new Date().getFullYear();
+let currentTriviaCategory = null;
+
+async function getTriviaCategories(){ return await fsList('triviacategories'); }
+
+async function renderTriviaCategories(){
+  const cats = await getTriviaCategories();
+  const wrap = document.getElementById('trivia-category-list');
+  if(cats.length===0){ wrap.innerHTML = '<p class="sans" style="color:var(--muted); grid-column:1/-1;">No trivia topics yet. Check back soon!</p>'; return; }
+  wrap.innerHTML = cats.map(c=>`
+    <div class="card" style="text-align:center; cursor:pointer;" onclick="startTrivia('${c.id}')">
+      <h3 style="color:#fff; font-weight:400; margin:0 0 6px;">${esc(c.name)}</h3>
+      <p class="small-note" style="margin:0;">${c.questions.length} question${c.questions.length===1?'':'s'}</p>
+      <div class="btn small" style="margin-top:14px;">Play</div>
+    </div>
+  `).join('');
+}
+
+function startTrivia(catId){
+  getTriviaCategories().then(cats=>{
+    currentTriviaCategory = cats.find(c=>c.id===catId);
+    if(!currentTriviaCategory) return;
+    document.getElementById('tv-play-title').textContent = currentTriviaCategory.name;
+    document.getElementById('tv-questions').innerHTML = currentTriviaCategory.questions.map((q,qi)=>`
+      <div style="margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid var(--line);">
+        <div class="sans" style="margin-bottom:8px;">${qi+1}. ${esc(q.q)}</div>
+        ${q.opts.map((o,oi)=>`<label class="sans" style="display:flex; align-items:center; gap:8px; padding:5px 0; color:var(--muted);"><input type="radio" name="tq${qi}" value="${oi}" style="width:auto;"> ${esc(o)}</label>`).join('')}
+      </div>
+    `).join('');
+    document.getElementById('tv-step-categories').classList.add('hidden');
+    document.getElementById('tv-step-play').classList.remove('hidden');
+    document.getElementById('tv-step-result').classList.add('hidden');
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+}
+function backToCategories(){
+  document.getElementById('tv-step-categories').classList.remove('hidden');
+  document.getElementById('tv-step-play').classList.add('hidden');
+  document.getElementById('tv-step-result').classList.add('hidden');
+  renderTriviaCategories();
+}
+
+async function submitTrivia(){
+  const name = document.getElementById('tv-player-name').value.trim();
+  const msg = document.getElementById('tv-play-msg');
+  if(!name){ showMsg(msg,'Enter your name first.','err'); return; }
+  const qs = currentTriviaCategory.questions;
+  let correct = 0;
+  qs.forEach((q,qi)=>{
+    const sel = document.querySelector(`input[name="tq${qi}"]:checked`);
+    if(sel && parseInt(sel.value) === q.a) correct++;
+  });
+  await fsAdd('triviascores', { categoryId: currentTriviaCategory.id, categoryName: currentTriviaCategory.name, name, score: correct, total: qs.length });
+
+  document.getElementById('tv-step-play').classList.add('hidden');
+  document.getElementById('tv-step-result').classList.remove('hidden');
+  document.getElementById('tv-score-display').textContent = correct + ' / ' + qs.length;
+  document.getElementById('tv-score-sub').textContent = currentTriviaCategory.name;
+  await renderLeaderboard(currentTriviaCategory.id);
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+async function renderLeaderboard(categoryId){
+  const scores = (await fsList('triviascores')).filter(s=>s.categoryId===categoryId);
+  scores.sort((a,b)=> b.score - a.score);
+  document.querySelector('#tv-leaderboard-table tbody').innerHTML = scores.slice(0,10).map((s,i)=>
+    `<tr><td>${i+1}</td><td>${esc(s.name)}</td><td>${s.score}/${s.total}</td></tr>`
+  ).join('') || '<tr><td colspan="3" style="color:var(--muted);">No scores yet. Be the first to play!</td></tr>';
+}
+
+renderTriviaCategories();
+</script>
+</body>
+</html>

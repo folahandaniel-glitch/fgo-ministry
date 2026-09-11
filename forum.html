@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forum — Fodan Gospel Outreach</title>
+<meta name="description" content="Discussion forum for the Fodan Gospel Outreach community.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="storage-warning" class="hidden sans" style="background:#8E1B2B;color:#fff;text-align:center;padding:10px 16px;font-size:0.82rem;">
+  &#9888; We're having trouble connecting right now. Some features may not save. Please try again shortly.
+</div>
+
+<header class="site-header">
+  <div class="nav-row">
+    <a href="index.html" class="brand">
+      <img src="assets/images/fgo-logo.png" alt="Fodan Gospel Outreach">
+      <div><div class="name">FODAN GOSPEL OUTREACH</div><div class="tag">Raising Youth, Families &amp; Generations for Christ</div></div>
+    </a>
+    <button id="nav-toggle">&#9776;</button>
+    <nav class="main-nav" id="main-nav">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="wings.html">Wings</a>
+      <a href="children.html">Children</a>
+      <a href="sermons.html">Sermons</a>
+      <a href="bible-school.html">Bible School</a>
+      <a href="trivia.html">Trivia</a>
+      <a href="forum.html" class="active">Forum</a>
+      <a href="events.html">Events</a>
+      <a href="testimonies.html">Testimonies</a>
+      <a href="register.html">Register</a>
+      <a href="contact.html">Contact</a>
+      <a href="give.html" class="give-link">Give</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero page-hero">
+  <div class="eyebrow">Community</div>
+  <h1>Discussion Forum</h1>
+  <p class="lead">Start a conversation or join one. Open to youth and all members.</p>
+</section>
+
+<section style="padding-top:0;">
+  <div class="wrap" style="max-width:760px;">
+
+    <!-- TOPIC VIEW -->
+    <div id="forum-topic-view" class="hidden">
+      <button class="btn outline" onclick="closeTopic()">&larr; Back to Topics</button>
+      <div class="card" style="margin-top:14px;">
+        <h2 style="border:none; color:#fff; font-weight:400;" id="topic-title"></h2>
+        <div id="topic-posts"></div>
+        <label>Your Name</label><input id="post-author">
+        <label>Message</label><textarea id="post-message"></textarea>
+        <button class="btn crimson" onclick="submitPost()">Post Reply</button>
+        <div class="msg" id="post-msg"></div>
+      </div>
+    </div>
+
+    <!-- TOPIC LIST -->
+    <div id="forum-topic-list">
+      <div class="card">
+        <h3 style="border:none; color:#fff; font-weight:400;">Start a New Topic</h3>
+        <label>Topic Title</label><input id="t-title" placeholder="e.g. How do I grow in prayer?">
+        <label>Category</label>
+        <select id="t-category">
+          <option>Youth</option><option>Bible Study</option><option>Testimonies</option>
+          <option>Prayer</option><option>Announcements</option><option>General</option>
+        </select>
+        <label>Your Name</label><input id="t-author">
+        <button class="btn crimson" onclick="createTopic()">Create Topic</button>
+        <div class="msg" id="t-msg"></div>
+      </div>
+
+      <div class="card" style="margin-top:16px;" id="topics-container"><p class="sans" style="color:var(--muted);">Loading topics...</p></div>
+    </div>
+
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="tagline">&ldquo;Raising Youth With Fire, Families With Light, and Generations With Christ.&rdquo;</div>
+  <div>FODAN GOSPEL OUTREACH &middot; The Living Youth International</div>
+  <div class="socials"><a href="https://bit.ly/4rSowUy" target="_blank">Website</a> &middot; <a href="tel:08067578112">08067578112</a> &middot; <a href="mailto:folahandaniel@gmail.com">Email</a></div>
+  <div style="margin-top:10px;">JESUS IS LORD.</div>
+  <div style="margin-top:16px; font-size:0.7rem; opacity:0.6;">&copy; <span id="year"></span> Fodan Gospel Outreach. All rights reserved. &middot; <a href="admin.html" style="color:inherit; opacity:0.7;">Admin</a></div>
+</footer>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/app.js"></script>
+<script>
+document.getElementById('year').textContent = new Date().getFullYear();
+
+async function createTopic(){
+  const title = document.getElementById('t-title').value.trim();
+  const author = document.getElementById('t-author').value.trim();
+  const msg = document.getElementById('t-msg');
+  if(!title || !author){ showMsg(msg,'Enter a topic title and your name.','err'); return; }
+  const id = await fsAdd('forumtopics', { title, category: document.getElementById('t-category').value, author });
+  if(!id){ showMsg(msg,'Save failed. Please try again.','err'); return; }
+  showMsg(msg,'Topic created.','ok');
+  document.getElementById('t-title').value=''; document.getElementById('t-author').value='';
+  renderTopics();
+}
+
+async function renderTopics(){
+  const topics = await fsList('forumtopics');
+  topics.sort((a,b)=> (b._createdAt?.seconds||0) - (a._createdAt?.seconds||0));
+  const wrap = document.getElementById('topics-container');
+  if(topics.length===0){ wrap.innerHTML = '<p class="sans" style="color:var(--muted);">No topics yet. Start the first one above.</p>'; return; }
+  wrap.innerHTML = topics.map(t=>`
+    <div class="item sans" style="cursor:pointer;" onclick="openTopic('${t.id}','${esc(t.title).replace(/'/g,"\\'")}')">
+      <span class="badge">${esc(t.category)}</span>
+      <h3 style="margin:6px 0 2px;">${esc(t.title)}</h3>
+      <div class="small-note">Started by ${esc(t.author)}</div>
+    </div>
+  `).join('');
+}
+
+let currentTopicId = null;
+
+function openTopic(id, title){
+  currentTopicId = id;
+  document.getElementById('topic-title').textContent = title;
+  document.getElementById('forum-topic-list').classList.add('hidden');
+  document.getElementById('forum-topic-view').classList.remove('hidden');
+  renderPosts();
+}
+function closeTopic(){
+  document.getElementById('forum-topic-view').classList.add('hidden');
+  document.getElementById('forum-topic-list').classList.remove('hidden');
+}
+
+async function renderPosts(){
+  const posts = (await fsList('forumposts')).filter(p=>p.topicId===currentTopicId);
+  posts.sort((a,b)=> (a._createdAt?.seconds||0) - (b._createdAt?.seconds||0));
+  const wrap = document.getElementById('topic-posts');
+  wrap.innerHTML = posts.length ? posts.map(p=>`
+    <div class="sans" style="border-top:1px solid var(--line); padding:10px 0;">
+      <div style="color:var(--gold-soft); font-size:0.82rem; font-weight:600;">${esc(p.author)}</div>
+      <div style="color:var(--ivory); font-size:0.88rem; margin-top:3px;">${esc(p.message)}</div>
+    </div>
+  `).join('') : '<p class="sans" style="color:var(--muted); font-size:0.85rem;">No replies yet. Be the first.</p>';
+}
+
+async function submitPost(){
+  const author = document.getElementById('post-author').value.trim();
+  const message = document.getElementById('post-message').value.trim();
+  const msg = document.getElementById('post-msg');
+  if(!author || !message){ showMsg(msg,'Enter your name and a message.','err'); return; }
+  const id = await fsAdd('forumposts', { topicId: currentTopicId, author, message });
+  if(!id){ showMsg(msg,'Save failed. Please try again.','err'); return; }
+  document.getElementById('post-message').value='';
+  showMsg(msg,'Posted.','ok');
+  renderPosts();
+}
+
+renderTopics();
+</script>
+</body>
+</html>

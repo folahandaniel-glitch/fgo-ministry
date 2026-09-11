@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Fodan Gospel Outreach</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="storage-warning" class="hidden sans" style="background:#8E1B2B;color:#fff;text-align:center;padding:10px 16px;font-size:0.82rem;">
+  &#9888; We're having trouble connecting right now. Some features may not save. Please try again shortly.
+</div>
+
+<header class="site-header">
+  <div class="nav-row">
+    <a href="index.html" class="brand">
+      <img src="assets/images/fgo-logo.png" alt="Fodan Gospel Outreach">
+      <div><div class="name">FODAN GOSPEL OUTREACH</div><div class="tag">Admin Panel</div></div>
+    </a>
+    <a href="index.html" class="btn small outline">&larr; Back to Site</a>
+  </div>
+</header>
+
+<section class="hero page-hero" style="padding-bottom:20px;">
+  <div class="eyebrow">Administration</div>
+  <h1>Admin Panel</h1>
+</section>
+
+<section style="padding-top:0;">
+  <div class="wrap" style="max-width:900px;">
+
+    <div id="admin-locked" class="card" style="text-align:center; padding:50px 20px;">
+      <p class="lead sans" style="margin:0 0 16px;">Sign in with your admin email and password. Only the designated Super Admin email can set up the first account.</p>
+      <div style="max-width:300px; margin:0 auto;">
+        <input id="admin-email" type="email" placeholder="Email address">
+        <input id="admin-pass" type="password" placeholder="Password">
+        <button class="btn crimson" style="width:100%; margin-top:12px;" onclick="tryAdminLogin()">Sign In</button>
+        <button class="btn small outline" style="width:100%; margin-top:8px;" onclick="forgotPassword()">Forgot Password?</button>
+      </div>
+      <div class="msg" id="admin-login-msg"></div>
+      <p class="small-note">Secured by Firebase Authentication. You'll stay signed in on this device until you log out.</p>
+    </div>
+
+    <div id="admin-panel" class="hidden">
+      <div class="card sans" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div>Logged in as <strong id="admin-whoami" style="color:var(--gold-soft);"></strong></div>
+        <button class="btn small outline" onclick="adminLogout()">Log Out</button>
+      </div>
+
+      <div class="grid cols-4" style="margin-top:20px;">
+        <div class="stat"><div class="n" id="stat-members">0</div><div class="l">Members</div></div>
+        <div class="stat"><div class="n" id="stat-welfare">0</div><div class="l">Welfare Requests</div></div>
+        <div class="stat"><div class="n" id="stat-testimonies-pending">0</div><div class="l">Pending Testimonies</div></div>
+        <div class="stat"><div class="n" id="stat-gifts">&#8358;0</div><div class="l">Total Given</div></div>
+      </div>
+
+      <!-- MEMBERS -->
+      <div class="card sans" style="margin-top:22px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Members</h3>
+        <div style="overflow-x:auto;"><table id="members-table"><thead><tr><th>Name</th><th>Phone</th><th>Wing</th><th>Branch</th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <div class="card sans" style="margin-top:22px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Welfare &amp; Prayer Requests</h3>
+        <div style="overflow-x:auto;"><table id="welfare-table"><thead><tr><th>Name</th><th>Phone</th><th>Request</th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <!-- SERMONS -->
+      <div class="card sans" style="margin-top:22px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Publish a Sermon</h3>
+        <label>Title</label><input id="s-title">
+        <label>Central Scripture</label><input id="s-scripture">
+        <label>Content</label><textarea id="s-content" style="min-height:150px;"></textarea>
+        <h4 class="sans" style="font-size:0.85rem; color:var(--gold-soft); margin:16px 0 6px;">Attach a File (optional: docx, pptx, pdf, mp3)</h4>
+        <label>Upload File</label>
+        <input id="s-attach-file" type="file" accept=".docx,.pptx,.pdf,.mp3,audio/*,application/pdf">
+        <p class="small-note" style="margin:4px 0 10px;">Limit ~700KB. For a longer audio recording, paste a link below instead.</p>
+        <label>Or paste an external link (YouTube, SoundCloud, Google Drive, etc.)</label>
+        <input id="s-attach-link" placeholder="https://...">
+        <button class="btn" onclick="publishSermon()" style="margin-top:14px;">Publish</button>
+        <div class="msg" id="s-msg"></div>
+      </div>
+      <div class="card sans" style="margin-top:12px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Manage Sermons</h3>
+        <div style="overflow-x:auto;"><table id="sermons-table"><thead><tr><th>Title</th><th>Scripture</th><th></th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <!-- BIBLE SCHOOL -->
+      <div class="card sans" style="margin-top:22px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Bible School &mdash; Payment Setup</h3>
+        <label>Standard Fee Per Course (&#8358;)</label><input id="sf-amount" type="number" min="0">
+        <p class="small-note">Set to 0 to keep Bible School free and rely on manually issued passcodes only.</p>
+        <button class="btn" onclick="saveSchoolFee()">Save Fee</button>
+        <div class="msg" id="sf-msg"></div>
+      </div>
+
+      <div class="card sans" style="margin-top:12px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Bible School &mdash; Generate Access Passcodes</h3>
+        <p class="small-note">Share these with students yourself (e.g. via WhatsApp) after they pay or register offline. Each code works once.</p>
+        <label>How many passcodes to generate?</label><input id="pc-qty" type="number" min="1" value="5">
+        <button class="btn" onclick="generatePasscodes()">Generate Passcodes</button>
+        <div class="msg" id="pc-msg"></div>
+        <div style="overflow-x:auto; margin-top:16px;"><table id="passcodes-table"><thead><tr><th>Code</th><th>Status</th><th>Used By</th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <div class="card sans" style="margin-top:12px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Bible School &mdash; Add a Course</h3>
+        <label>Course Name</label><input id="co-name" placeholder="e.g. Church Administration">
+        <label>Short Description</label><input id="co-desc">
+        <button class="btn" onclick="createCourse()">Add Course</button>
+        <div class="msg" id="co-msg"></div>
+      </div>
+      <div class="card sans" style="margin-top:12px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Manage Courses</h3>
+        <div style="overflow-x:auto;"><table id="courses-table"><thead><tr><th>Course</th><th>Description</th><th>Exam Qs</th><th></th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <div class="card sans" style="margin-top:12px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Upload Exam Questions (.docx)</h3>
+        <p class="small-note" style="margin-top:0;">Number each question, list options as A) B) C) D), and place an asterisk (*) directly before the correct option's letter:</p>
+        <pre class="sans" style="background:#0A1523; padding:10px; border-radius:6px; font-size:0.75rem; color:var(--muted); white-space:pre-wrap;">1. What is the fear of the Lord?
+A) Terror of God
+*B) Reverence and awe of God
+C) Avoiding church
+D) A myth</pre>
+        <label>Course</label>
+        <select id="ex-upload-course"></select>
+        <label>Choose .docx File</label><input id="ex-upload-file" type="file" accept=".docx">
+        <button class="btn outline" onclick="parseExamDocx()">Preview Questions</button>
+        <div id="ex-preview" style="margin-top:14px;"></div>
+        <div class="msg" id="ex-upload-msg"></div>
+      </div>
+
+      <div class="card sans" style="margin-top:12px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Bible School Enrollments</h3>
+        <div style="overflow-x:auto;"><table id="enrollments-table"><thead><tr><th>Name</th><th>Phone</th><th>Role</th><th>Course</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="card sans" style="margin-top:12px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Exam Results</h3>
+        <div style="overflow-x:auto;"><table id="examresults-table"><thead><tr><th>Name</th><th>Course</th><th>Score</th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <div class="card sans" style="margin-top:12px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Course Materials (docx, pptx, pdf)</h3>
+        <label>Course</label>
+        <select id="cm-course"></select>
+        <label>Choose File</label>
+        <input id="cm-file" type="file" accept=".docx,.pptx,.pdf,.doc,.ppt">
+        <p class="small-note" style="margin:4px 0 10px;">Limit ~700KB per file (a database-size limit). For larger files, paste a link below instead (e.g. a Google Drive link).</p>
+        <label>Or paste an external link</label>
+        <input id="cm-link" placeholder="https://...">
+        <label>Description (optional)</label>
+        <input id="cm-desc" placeholder="e.g. Week 1 handout">
+        <button class="btn" onclick="uploadCourseMaterial()">Save Material</button>
+        <div class="msg" id="cm-msg"></div>
+        <div style="overflow-x:auto; margin-top:16px;"><table id="materials-table"><thead><tr><th>Course</th><th>File</th><th>Description</th><th></th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <!-- CHILDREN'S DEPARTMENT -->
+      <div class="card sans" style="margin-top:22px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Children's Department &mdash; Add/Edit a Bible Story Lesson</h3>
+        <div style="background:rgba(212,175,55,0.08); border:1px solid var(--line); border-radius:8px; padding:14px; margin-bottom:16px;">
+          <p class="small-note" style="margin:0 0 8px; color:var(--gold-soft);">One-click starter pack: Creation through Isaac, ten Genesis stories in order.</p>
+          <button class="btn small outline" onclick="addGenesisPack()">Add Genesis Story Pack (10 Lessons)</button>
+          <div class="msg" id="genesis-pack-msg"></div>
+        </div>
+        <label>Lesson Title</label><input id="k-title" placeholder="e.g. Noah's Ark">
+        <label>Central Scripture</label><input id="k-scripture" placeholder="e.g. Genesis 6-9">
+        <label>Lesson Order Number</label><input id="k-order" type="number">
+        <h4 class="sans" style="font-size:0.85rem; color:var(--gold-soft); margin:16px 0 6px;">Story Panels (in order)</h4>
+        <div id="k-panel-builder"></div>
+        <button class="btn small outline" onclick="addKidPanelRow()">+ Add Panel</button>
+
+        <h4 class="sans" style="font-size:0.85rem; color:var(--gold-soft); margin:16px 0 6px;">Optional Materials (docx, pptx, pdf, mp3, mp4)</h4>
+        <label>Upload File</label>
+        <input id="k-attach-file" type="file" accept=".docx,.pptx,.pdf,.mp3,.mp4,audio/*,video/*,application/pdf">
+        <p class="small-note" style="margin:4px 0 10px;">Limit ~700KB. For larger audio/video, use the link field below instead.</p>
+        <label>Or paste an external link (YouTube, Google Drive, etc.)</label>
+        <input id="k-attach-link" placeholder="https://...">
+        <br><br>
+        <button class="btn" id="k-save-btn" onclick="saveKidLesson()">Save Lesson</button>
+        <button class="btn outline hidden" id="k-cancel-edit-btn" onclick="cancelKidEdit()">Cancel Edit</button>
+        <div class="msg" id="k-msg"></div>
+      </div>
+
+      <div class="card sans" style="margin-top:12px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Children's Lessons</h3>
+        <div style="overflow-x:auto;"><table id="kids-table"><thead><tr><th>#</th><th>Title</th><th>Scripture</th><th>Panels</th><th>Materials</th><th></th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="card sans" style="margin-top:12px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Children's Progress</h3>
+        <div style="overflow-x:auto;"><table id="kidprogress-table"><thead><tr><th>Child</th><th>Story Completed</th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <!-- TRIVIA -->
+      <div class="card sans" style="margin-top:22px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Bible Trivia &mdash; Create a Category</h3>
+        <div style="background:rgba(212,175,55,0.08); border:1px solid var(--line); border-radius:8px; padding:14px; margin-bottom:16px;">
+          <p class="small-note" style="margin:0 0 8px; color:var(--gold-soft);">One-click starter pack: 10 general Bible knowledge questions.</p>
+          <button class="btn small outline" onclick="addTriviaStarterPack()">Add Starter Trivia Pack</button>
+          <div class="msg" id="trivia-pack-msg"></div>
+        </div>
+        <label>Category Name</label><input id="tv-cat-name" placeholder="e.g. Old Testament Heroes">
+
+        <h4 class="sans" style="font-size:0.85rem; color:var(--gold-soft); margin:16px 0 6px;">Upload Questions from a Word Document (optional)</h4>
+        <p class="small-note" style="margin-top:0;">Number each question, list options as A) B) C) D), and place an asterisk (*) before the correct option's letter:</p>
+        <pre class="sans" style="background:#0A1523; padding:10px; border-radius:6px; font-size:0.75rem; color:var(--muted); white-space:pre-wrap;">1. Who built the ark?
+A) Moses
+*B) Noah
+C) Abraham
+D) David</pre>
+        <label>Choose .docx File</label><input id="tv-upload-file" type="file" accept=".docx">
+        <button class="btn small outline" onclick="parseTriviaDocx()">Preview Questions</button>
+        <div id="tv-upload-preview" style="margin-top:14px;"></div>
+        <div class="msg" id="tv-upload-msg"></div>
+
+        <h4 class="sans" style="font-size:0.85rem; color:var(--gold-soft); margin:16px 0 6px;">Or Type Questions Directly</h4>
+        <div id="tv-question-builder"></div>
+        <button class="btn small outline" onclick="addTriviaQuestionRow()">+ Add Question</button>
+        <br><br>
+        <button class="btn" id="tv-save-btn" onclick="saveTriviaCategory()">Save Category</button>
+        <button class="btn outline hidden" id="tv-cancel-edit-btn" onclick="cancelTriviaEdit()">Cancel Edit</button>
+        <div class="msg" id="tv-msg"></div>
+      </div>
+      <div class="card sans" style="margin-top:12px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Trivia Categories</h3>
+        <div style="overflow-x:auto;"><table id="trivia-table"><thead><tr><th>Category</th><th>Questions</th><th>Plays</th><th></th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <!-- FORUM MODERATION -->
+      <div class="card sans" style="margin-top:22px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Forum &mdash; Topics</h3>
+        <div style="overflow-x:auto;"><table id="forum-topics-table"><thead><tr><th>Title</th><th>Category</th><th>Started By</th><th>Replies</th><th></th></tr></thead><tbody></tbody></table></div>
+        <div id="forum-posts-panel" class="hidden" style="margin-top:16px;">
+          <h4 class="sans" style="color:var(--gold-soft); font-size:0.85rem;" id="forum-posts-title"></h4>
+          <div style="overflow-x:auto;"><table id="forum-posts-table"><thead><tr><th>Author</th><th>Message</th><th></th></tr></thead><tbody></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- EVENTS -->
+      <div class="card sans" style="margin-top:22px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Create an Event</h3>
+        <label>Event Title</label><input id="ev-title">
+        <label>Category</label>
+        <select id="ev-category"><option>Convention</option><option>Revival</option><option>Retreat</option><option>Youth Camp</option><option>Workshop</option><option>Other</option></select>
+        <label>Description</label><textarea id="ev-desc"></textarea>
+        <label>Date</label><input id="ev-date" type="date">
+        <label>Time</label><input id="ev-time" type="time">
+        <label>Location</label><input id="ev-location">
+        <label>Ticket Price (&#8358;, 0 for free)</label><input id="ev-price" type="number" min="0" value="0">
+        <button class="btn" onclick="createEvent()">Publish Event</button>
+        <div class="msg" id="ev-msg"></div>
+      </div>
+      <div class="card sans" style="margin-top:12px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Manage Events</h3>
+        <div style="overflow-x:auto;"><table id="events-table"><thead><tr><th>Event</th><th>Date</th><th>Tickets</th><th>Revenue</th><th></th></tr></thead><tbody></tbody></table></div>
+        <div id="attendees-panel" class="hidden" style="margin-top:16px;">
+          <h4 class="sans" style="color:var(--gold-soft); font-size:0.85rem;" id="attendees-title"></h4>
+          <div style="overflow-x:auto;"><table id="attendees-table"><thead><tr><th>Name</th><th>Phone</th><th>Code</th></tr></thead><tbody></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- TESTIMONIES -->
+      <div class="card sans" style="margin-top:22px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Testimony Moderation</h3>
+        <div style="overflow-x:auto;"><table id="pending-testimony-table"><thead><tr><th>Name</th><th>Testimony</th><th></th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="card sans" style="margin-top:12px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Published Testimonies</h3>
+        <div style="overflow-x:auto;"><table id="approved-testimony-table"><thead><tr><th>Name</th><th>Testimony</th><th>Reactions</th><th></th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <!-- GIVING -->
+      <div class="card sans" style="margin-top:22px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Online Giving Setup</h3>
+        <label>Paystack Public Key</label><input id="pk-key" placeholder="pk_test_... or pk_live_...">
+        <p class="small-note">Get this from your Paystack Dashboard → Settings → API Keys. Use pk_test_ first.</p>
+        <button class="btn" onclick="savePaystackKey()">Save Key</button>
+        <div class="msg" id="pk-msg"></div>
+      </div>
+      <div class="card sans" style="margin-top:12px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">Giving Records</h3>
+        <div style="overflow-x:auto;"><table id="gifts-table"><thead><tr><th>Name</th><th>Purpose</th><th>Amount</th><th>Reference</th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <!-- ABOUT PAGE CONTENT -->
+      <div class="card sans" style="margin-top:22px;">
+        <h3 style="border:none; color:#fff; font-weight:400;">About / Trust Page Content</h3>
+        <label>Mission Statement</label><textarea id="ab-mission" style="min-height:80px;"></textarea>
+        <label>Statement of Faith</label><textarea id="ab-faith" style="min-height:200px;"></textarea>
+        <label>Registration / Legal Details (leave blank to hide)</label><textarea id="ab-registration" style="min-height:60px;"></textarea>
+        <button class="btn" onclick="saveAboutContent()">Save About Page</button>
+        <div class="msg" id="ab-msg"></div>
+      </div>
+
+      <!-- SUPER ADMIN: MANAGE ADMINS -->
+      <div class="card sans hidden" id="super-admin-section" style="margin-top:22px;">
+        <h3 style="border:none; color:var(--gold-soft); font-weight:400;">Super Admin — Manage Admins</h3>
+        <label>New Admin Email</label><input id="na-email" type="email">
+        <label>Temporary Password</label><input id="na-password" type="password">
+        <label>Note</label><input id="na-note" placeholder="e.g. Sermon uploads, Welfare desk">
+        <button class="btn" onclick="createAdmin()">Create Admin</button>
+        <div class="msg" id="na-msg"></div>
+        <div style="overflow-x:auto; margin-top:16px;"><table id="admins-table"><thead><tr><th>Email</th><th>Note</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div style="font-size:0.7rem; opacity:0.6;">&copy; <span id="year"></span> Fodan Gospel Outreach.</div>
+</footer>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.11.0/mammoth.browser.min.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/kids-data.js"></script>
+<script src="js/admin.js"></script>
+<script>
+document.getElementById('year').textContent = new Date().getFullYear();
+addKidPanelRow();
+addTriviaQuestionRow();
+</script>
+</body>
+</html>

@@ -1,0 +1,188 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function adminDoc() {
+      return get(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    function isActiveAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && adminDoc().data.active == true;
+    }
+    function isSuper() {
+      return isActiveAdmin() && adminDoc().data.role == 'super';
+    }
+
+    // Membership registrations: anyone can register. Only signed-in,
+    // active admins can read the list back or edit/remove a record —
+    // this protects phone numbers, addresses, and prayer requests from
+    // being readable by the public.
+    match /members/{id} {
+      allow read, update, delete: if isActiveAdmin();
+      allow create: if true;
+    }
+
+    // Sermons and events are public content, meant to be read by everyone.
+    // Only signed-in, active admins can create/edit/delete them.
+    match /sermons/{id} {
+      allow read: if true;
+      allow write: if isActiveAdmin();
+    }
+    match /events/{id} {
+      allow read: if true;
+      allow write: if isActiveAdmin();
+    }
+
+    // Tickets carry names and phone numbers — not publicly readable.
+    // Anyone can create one (buying/reserving a ticket); only admins can
+    // read the attendee list or edit/remove entries (e.g. check-in).
+    match /tickets/{id} {
+      allow read, update, delete: if isActiveAdmin();
+      allow create: if true;
+    }
+
+    // Testimonies: only approved ones are publicly readable; admins can
+    // read all of them (including pending, for moderation). Anyone can
+    // submit one (goes in as "pending"). Only admins can approve, edit
+    // content, or delete — except one narrow, deliberate exception: any
+    // visitor may increment the "reactions" count by exactly 1 on an
+    // already-approved testimony (the public heart button), and nothing
+    // else about the document.
+    match /testimonies/{id} {
+      allow read: if resource.data.status == 'approved' || isActiveAdmin();
+      allow create: if true;
+      allow update: if isActiveAdmin()
+                    || (resource.data.status == 'approved'
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions'])
+                        && request.resource.data.reactions == resource.data.reactions + 1);
+      allow delete: if isActiveAdmin();
+    }
+
+    // Giving records carry names and amounts — admin-only read/write,
+    // aside from the record created at the moment of a successful gift.
+    match /gifts/{id} {
+      allow read, update, delete: if isActiveAdmin();
+      allow create: if true;
+    }
+
+    // Bible School: courses and exam question sets are public to read
+    // (so the Bible School page can display them), admin-only to write.
+    match /courses/{id} {
+      allow read: if true;
+      allow write: if isActiveAdmin();
+    }
+    match /examsets/{id} {
+      allow read: if true;
+      allow write: if isActiveAdmin();
+    }
+    match /coursematerials/{id} {
+      allow read: if true;
+      allow write: if isActiveAdmin();
+    }
+
+    // Children's Department: lessons are public content (free, no gating,
+    // by design). Admin-only to create/edit/delete.
+    match /kidlessons/{id} {
+      allow read: if true;
+      allow write: if isActiveAdmin();
+    }
+    // A child's completion record — anyone can create one (marking a
+    // story finished); admin-only to read the list or remove an entry.
+    match /kidprogress/{id} {
+      allow read: if isActiveAdmin();
+      allow create: if true;
+      allow update, delete: if isActiveAdmin();
+    }
+
+    // Bible Trivia: categories/questions are public to read (needed to
+    // play), admin-only to write. Leaderboard scores are public read
+    // (that's the point of a leaderboard) and anyone can add their own
+    // score by playing; no edit/delete path from the public side.
+    match /triviacategories/{id} {
+      allow read: if true;
+      allow write: if isActiveAdmin();
+    }
+    match /triviascores/{id} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if isActiveAdmin();
+    }
+
+    // Forum: topics and posts are public content by nature — anyone can
+    // start a topic or reply. Only admins can delete (moderation); no
+    // public edit path exists once posted.
+    match /forumtopics/{id} {
+      allow read: if true;
+      allow create: if true;
+      allow update: if isActiveAdmin();
+      allow delete: if isActiveAdmin();
+    }
+    match /forumposts/{id} {
+      allow read: if true;
+      allow create: if true;
+      allow update: if isActiveAdmin();
+      allow delete: if isActiveAdmin();
+    }
+
+    // Enrollments and exam results carry names/phone numbers/scores —
+    // admin-only read. Anyone can create one (enrolling or submitting an
+    // exam); no client-side edit path exists for these yet.
+    match /enrollments/{id} {
+      allow read: if isActiveAdmin();
+      allow create: if true;
+      allow update, delete: if isActiveAdmin();
+    }
+    match /examresults/{id} {
+      allow read: if isActiveAdmin();
+      allow create: if true;
+      allow update, delete: if isActiveAdmin();
+    }
+
+    // Access passcodes: anyone can read the code documents (needed to
+    // verify/consume a code when a student enters or pays for one) and
+    // mark one as used, but only in the narrow way the app actually
+    // does it — flipping "used" from false to true and attaching who
+    // used it. Only admins can generate fresh, unused codes.
+    match /passcodes/{code} {
+      allow read: if true;
+      allow create: if isActiveAdmin();
+      allow update: if isActiveAdmin()
+                    || (resource.data.used == false
+                        && request.resource.data.used == true
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used','usedBy','usedAt']));
+      allow delete: if isActiveAdmin();
+    }
+
+    // Admin accounts. The very first document can only be created by
+    // someone who has authenticated (via Firebase Auth itself, meaning
+    // they know the password) as the one designated Super Admin email —
+    // see DESIGNATED_SUPER_ADMIN_EMAIL in js/admin.js. Every account
+    // after that can only be created, edited, or removed by an existing
+    // Super Admin.
+    match /admins/{uid} {
+      allow read: if isActiveAdmin();
+      allow create: if isSuper()
+                    || (request.auth.uid == uid
+                        && request.resource.data.role == 'super'
+                        && request.resource.data.email == 'folahandaniel@gmail.com'
+                        && request.auth.token.email == 'folahandaniel@gmail.com');
+      allow update, delete: if isSuper();
+    }
+
+    // Site-wide settings: Paystack key, About page text. Public read
+    // (the About page and Give page need this), admin-only write.
+    match /config/{id} {
+      allow read: if true;
+      allow write: if isActiveAdmin();
+    }
+
+    // Used only by the built-in connectivity check.
+    match /_healthcheck/{id} {
+      allow read, write: if true;
+    }
+  }
+}

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact — Fodan Gospel Outreach</title>
+<meta name="description" content="Get in touch with Fodan Gospel Outreach.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="storage-warning" class="hidden sans" style="background:#8E1B2B;color:#fff;text-align:center;padding:10px 16px;font-size:0.82rem;">
+  &#9888; We're having trouble connecting right now. Some features may not save. Please try again shortly.
+</div>
+
+<header class="site-header">
+  <div class="nav-row">
+    <a href="index.html" class="brand">
+      <img src="assets/images/fgo-logo.png" alt="Fodan Gospel Outreach">
+      <div><div class="name">FODAN GOSPEL OUTREACH</div><div class="tag">Raising Youth, Families &amp; Generations for Christ</div></div>
+    </a>
+    <button id="nav-toggle">&#9776;</button>
+    <nav class="main-nav" id="main-nav">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="wings.html">Wings</a>
+      <a href="children.html">Children</a>
+      <a href="sermons.html">Sermons</a>
+      <a href="bible-school.html">Bible School</a>
+      <a href="trivia.html">Trivia</a>
+      <a href="forum.html">Forum</a>
+      <a href="events.html">Events</a>
+      <a href="testimonies.html">Testimonies</a>
+      <a href="register.html">Register</a>
+      <a href="contact.html" class="active">Contact</a>
+      <a href="give.html" class="give-link">Give</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero page-hero">
+  <div class="eyebrow">Get in Touch</div>
+  <h1>Contact Us</h1>
+  <p class="lead">We would love to hear from you, pray with you, or welcome you home.</p>
+</section>
+
+<section style="padding-top:0;">
+  <div class="wrap">
+    <div class="grid cols-2">
+      <div class="card">
+        <h3 style="border:none; color:#fff; font-weight:400;">Reach Us Directly</h3>
+        <div class="sans" style="color:var(--ivory); font-size:0.95rem; line-height:2;">
+          <div>&#128205; Ibadan, Oyo State, Nigeria</div>
+          <div>&#128222; <a href="tel:08067578112">08067578112</a></div>
+          <div>&#128172; <a href="https://wa.me/2348067578112" target="_blank">WhatsApp: 08067578112</a></div>
+          <div>&#9993; <a href="mailto:folahandaniel@gmail.com">folahandaniel@gmail.com</a></div>
+          <div>&#127760; <a href="https://bit.ly/4rSowUy" target="_blank">bit.ly/4rSowUy</a></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="border:none; color:#fff; font-weight:400;">Send a Message</h3>
+        <label>Your Name</label><input id="c-name">
+        <label>Your Email</label><input id="c-email" type="email">
+        <label>Message</label><textarea id="c-message"></textarea>
+        <button class="btn crimson" onclick="sendContactMessage()">Send Message</button>
+        <div class="msg" id="c-msg"></div>
+        <p class="small-note">This opens your email app addressed to the ministry. For faster response, use WhatsApp above.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="tagline">&ldquo;Raising Youth With Fire, Families With Light, and Generations With Christ.&rdquo;</div>
+  <div>FODAN GOSPEL OUTREACH &middot; The Living Youth International</div>
+  <div class="socials"><a href="https://bit.ly/4rSowUy" target="_blank">Website</a> &middot; <a href="tel:08067578112">08067578112</a> &middot; <a href="mailto:folahandaniel@gmail.com">Email</a></div>
+  <div style="margin-top:10px;">JESUS IS LORD.</div>
+  <div style="margin-top:16px; font-size:0.7rem; opacity:0.6;">&copy; <span id="year"></span> Fodan Gospel Outreach. All rights reserved. &middot; <a href="admin.html" style="color:inherit; opacity:0.7;">Admin</a></div>
+</footer>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/app.js"></script>
+<script>
+document.getElementById('year').textContent = new Date().getFullYear();
+function sendContactMessage(){
+  const name = document.getElementById('c-name').value.trim();
+  const email = document.getElementById('c-email').value.trim();
+  const message = document.getElementById('c-message').value.trim();
+  const msg = document.getElementById('c-msg');
+  if(!name || !message){ showMsg(msg,'Enter your name and a message.','err'); return; }
+  const subject = encodeURIComponent('Message from ' + name + ' — FGO Website');
+  const body = encodeURIComponent(message + '\n\nFrom: ' + name + (email? ' ('+email+')':''));
+  window.location.href = `mailto:folahandaniel@gmail.com?subject=${subject}&body=${body}`;
+  showMsg(msg, 'Opening your email app...', 'ok');
+}
+</script>
+</body>
+</html>
